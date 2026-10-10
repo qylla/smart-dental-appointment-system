@@ -1,6 +1,47 @@
 {{-- Treatments offered — Klinik Pergigian Dr. Zuraida --}}
 {{-- Included from the landing page, inside .kx-shell --}}
 
+@php
+    // Category key => lang key for its label.
+    $catLabels = [
+        'asas'      => 'cat_routine',
+        'pemulihan' => 'cat_restore',
+        'ganti'     => 'cat_replace',
+        'estetik'   => 'cat_appearance',
+    ];
+
+    // [lang key prefix, category, number of option bullets]
+    // Order here is the order shown on the page.
+    $treatments = [
+        ['scaling',   'asas',      0],
+        ['fluoride',  'asas',      0],
+        ['extract',   'asas',      0],
+
+        ['filling',   'pemulihan', 0],
+        ['rootcanal', 'pemulihan', 0],
+        ['post',      'pemulihan', 0],
+        ['crown',     'pemulihan', 3],
+
+        ['bridge',    'ganti',     0],
+        ['denture',   'ganti',     2],
+        ['frc',       'ganti',     0],
+        ['implant',   'ganti',     0],
+
+        ['veneer',    'estetik',   2],
+        ['whitening', 'estetik',   0],
+        ['braces',    'estetik',   2],
+        ['retainer',  'estetik',   3],
+    ];
+
+    // Starting prices from the clinic's own printed price list.
+    // Treatments not in this list show "price after check-up" instead.
+    $prices = config('clinic.prices', []);
+
+    // $bookUrl comes from the landing page. Fall back to login if this
+    // partial is ever included somewhere else.
+    $svcBookUrl = $bookUrl ?? route('login');
+@endphp
+
 <section id="services" class="kx-section">
 
     {{-- reusable tooth glyph, referenced by every card --}}
@@ -18,152 +59,56 @@
 
     <div class="kx-svc-filters" role="group" aria-label="{{ __('site.treat.filter_label') }}">
         <button type="button" class="kx-svc-chip is-active" data-filter="all" aria-pressed="true">{{ __('site.treat.all') }}</button>
-        <button type="button" class="kx-svc-chip" data-filter="asas" aria-pressed="false">{{ __('site.treat.cat_routine') }}</button>
-        <button type="button" class="kx-svc-chip" data-filter="pemulihan" aria-pressed="false">{{ __('site.treat.cat_restore') }}</button>
-        <button type="button" class="kx-svc-chip" data-filter="ganti" aria-pressed="false">{{ __('site.treat.cat_replace') }}</button>
-        <button type="button" class="kx-svc-chip" data-filter="estetik" aria-pressed="false">{{ __('site.treat.cat_appearance') }}</button>
+        @foreach ($catLabels as $cat => $labelKey)
+            <button type="button" class="kx-svc-chip" data-filter="{{ $cat }}" aria-pressed="false">{{ __('site.treat.' . $labelKey) }}</button>
+        @endforeach
     </div>
 
     <ul class="kx-svc-grid" id="kxSvcGrid">
+        @foreach ($treatments as [$key, $cat, $optCount])
+            <li class="kx-svc-card" data-cat="{{ $cat }}">
+                <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
+                <span class="kx-svc-cat">{{ __('site.treat.' . $catLabels[$cat]) }}</span>
+                <h3 class="kx-svc-name">{{ __("site.treat.{$key}_name") }}</h3>
+                <p class="kx-svc-desc">{{ __("site.treat.{$key}_desc") }}</p>
 
-        {{-- ── Routine & preventive ───────────────────────────── --}}
-        <li class="kx-svc-card" data-cat="asas">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_routine') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.scaling_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.scaling_desc') }}</p>
-        </li>
+                @if ($optCount > 0)
+                    <ul class="kx-svc-opts">
+                        @for ($i = 1; $i <= $optCount; $i++)
+                            <li>{{ __("site.treat.{$key}_opt_{$i}") }}</li>
+                        @endfor
+                    </ul>
+                @endif
 
-        <li class="kx-svc-card" data-cat="asas">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_routine') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.fluoride_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.fluoride_desc') }}</p>
-        </li>
-
-        <li class="kx-svc-card" data-cat="asas">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_routine') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.extract_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.extract_desc') }}</p>
-        </li>
-
-        {{-- ── Restorative ────────────────────────────────────── --}}
-        <li class="kx-svc-card" data-cat="pemulihan">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_restore') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.filling_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.filling_desc') }}</p>
-        </li>
-
-        <li class="kx-svc-card" data-cat="pemulihan">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_restore') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.rootcanal_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.rootcanal_desc') }}</p>
-        </li>
-
-        <li class="kx-svc-card" data-cat="pemulihan">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_restore') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.post_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.post_desc') }}</p>
-        </li>
-
-        <li class="kx-svc-card" data-cat="pemulihan">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_restore') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.crown_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.crown_desc') }}</p>
-            <ul class="kx-svc-opts">
-                <li>{{ __('site.treat.crown_opt_1') }}</li>
-                <li>{{ __('site.treat.crown_opt_2') }}</li>
-                <li>{{ __('site.treat.crown_opt_3') }}</li>
-            </ul>
-        </li>
-
-        {{-- ── Replacing teeth ────────────────────────────────── --}}
-        <li class="kx-svc-card" data-cat="ganti">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_replace') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.bridge_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.bridge_desc') }}</p>
-        </li>
-
-        <li class="kx-svc-card" data-cat="ganti">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_replace') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.denture_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.denture_desc') }}</p>
-            <ul class="kx-svc-opts">
-                <li>{{ __('site.treat.denture_opt_1') }}</li>
-                <li>{{ __('site.treat.denture_opt_2') }}</li>
-            </ul>
-        </li>
-
-        <li class="kx-svc-card" data-cat="ganti">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_replace') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.frc_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.frc_desc') }}</p>
-        </li>
-
-        <li class="kx-svc-card" data-cat="ganti">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_replace') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.implant_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.implant_desc') }}</p>
-        </li>
-
-        {{-- ── Appearance & alignment ─────────────────────────── --}}
-        <li class="kx-svc-card" data-cat="estetik">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_appearance') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.veneer_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.veneer_desc') }}</p>
-            <ul class="kx-svc-opts">
-                <li>{{ __('site.treat.veneer_opt_1') }}</li>
-                <li>{{ __('site.treat.veneer_opt_2') }}</li>
-            </ul>
-        </li>
-
-        <li class="kx-svc-card" data-cat="estetik">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_appearance') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.whitening_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.whitening_desc') }}</p>
-        </li>
-
-        <li class="kx-svc-card" data-cat="estetik">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_appearance') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.braces_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.braces_desc') }}</p>
-            <ul class="kx-svc-opts">
-                <li>{{ __('site.treat.braces_opt_1') }}</li>
-                <li>{{ __('site.treat.braces_opt_2') }}</li>
-            </ul>
-        </li>
-
-        <li class="kx-svc-card" data-cat="estetik">
-            <svg class="kx-svc-mark" aria-hidden="true"><use href="#kx-svc-tooth"></use></svg>
-            <span class="kx-svc-cat">{{ __('site.treat.cat_appearance') }}</span>
-            <h3 class="kx-svc-name">{{ __('site.treat.retainer_name') }}</h3>
-            <p class="kx-svc-desc">{{ __('site.treat.retainer_desc') }}</p>
-            <ul class="kx-svc-opts">
-                <li>{{ __('site.treat.retainer_opt_1') }}</li>
-                <li>{{ __('site.treat.retainer_opt_2') }}</li>
-                <li>{{ __('site.treat.retainer_opt_3') }}</li>
-            </ul>
-        </li>
-
+                <div class="kx-svc-price-row">
+                    @if (isset($prices[$key]))
+                        <span class="kx-svc-price">
+                            <i class='bx bx-purchase-tag-alt'></i>
+                            {{ __('site.treat.price_from', ['amount' => number_format($prices[$key])]) }}
+                        </span>
+                    @else
+                        <span class="kx-svc-price is-ask">
+                            <i class='bx bx-search-alt'></i>
+                            {{ __('site.treat.price_ask') }}
+                        </span>
+                    @endif
+                </div>
+            </li>
+        @endforeach
     </ul>
 
     <p class="kx-svc-empty" id="kxSvcEmpty" hidden>{{ __('site.treat.empty') }}</p>
 
+    @if (! empty($prices))
+        <p class="kx-svc-price-note">
+            <i class='bx bx-info-circle'></i>
+            {{ __('site.treat.price_note', ['date' => config('clinic.prices_updated', '')]) }}
+        </p>
+    @endif
+
     <div class="kx-svc-foot">
         <p class="kx-svc-foot-text">{{ __('site.treat.foot_text') }}</p>
-        <a href="@auth{{ route('booking') }}@else{{ route('login') }}@endauth" class="kx-btn kx-btn-dark">
+        <a href="{{ $svcBookUrl }}" class="kx-btn kx-btn-dark">
             {{ __('site.treat.foot_cta') }} <i class='bx bx-right-arrow-alt'></i>
         </a>
     </div>
@@ -203,11 +148,12 @@
 .kx-svc-card{
     position:relative;
     overflow:hidden;
+    display:flex; flex-direction:column;
     background:var(--vanilla);
     border:1px solid rgba(94,68,46,.08);
     border-left:4px solid var(--powder);
     border-radius:28px;
-    padding:28px 26px 26px;
+    padding:28px 26px 24px;
     box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 14px 30px -18px rgba(94,68,46,.4);
     transition:transform .3s ease, box-shadow .3s ease;
 }
@@ -255,10 +201,32 @@
 }
 .kx-svc-opts li::marker{ color:rgba(94,68,46,.4); }
 
+/* Price tag: the row is pushed to the bottom so tags line up across a row */
+.kx-svc-price-row{ position:relative; z-index:1; margin-top:auto; padding-top:18px; }
+.kx-svc-price{
+    display:inline-flex; align-items:center; gap:6px;
+    background:#fff;
+    border:1px solid rgba(94,68,46,.14);
+    border-radius:999px;
+    padding:6px 13px;
+    font-size:.86rem; font-weight:700;
+    color:var(--walnut);
+}
+.kx-svc-price i{ font-size:1.05rem; }
+.kx-svc-price.is-ask{ background:transparent; border-color:transparent; padding-left:0; font-weight:600; color:var(--muted); }
+
+.kx-svc-price-note{
+    display:flex; align-items:flex-start; gap:8px;
+    margin:22px 0 0;
+    font-size:.84rem; line-height:1.55;
+    color:var(--muted);
+}
+.kx-svc-price-note i{ font-size:1rem; margin-top:2px; flex-shrink:0; }
+
 .kx-svc-empty{ padding:28px 0; margin:0; color:var(--muted); }
 
 .kx-svc-foot{
-    margin-top:30px;
+    margin-top:24px;
     padding:26px 30px;
     background:rgba(255,255,255,.6);
     border:1px solid rgba(94,68,46,.08);

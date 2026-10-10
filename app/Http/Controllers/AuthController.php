@@ -29,6 +29,7 @@ class AuthController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone'    => ['required', 'string', 'max:20'],
+            'date_of_birth' => ['required', 'date', 'before:today'],
             'password' => ['required', 'confirmed', Password::min(8)],
         ], [
             'email.unique'        => 'That email is already registered. Try logging in instead.',
@@ -39,6 +40,7 @@ class AuthController extends Controller
             'name'     => $data['name'],
             'email'    => $data['email'],
             'phone'    => $data['phone'],
+            'date_of_birth' => $data['date_of_birth'],
             'password' => Hash::make($data['password']),
             'role'     => 'patient', // staff accounts are created by the clinic, not self-registered
         ]);

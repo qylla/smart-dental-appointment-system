@@ -14,17 +14,25 @@ class ClinicSetting extends Model
     }
 
     /**
-     * Defaults used when the admin has not saved anything yet.
-     * These mirror the values the booking system assumed before settings existed.
+     * Every slot the clinic could offer, every 30 minutes.
+     * Day session 8:30 AM - 5:00 PM (last booking 4:30 PM),
+     * night session 8:00 PM - 10:00 PM (last booking 9:30 PM).
      */
-    public const DEFAULTS = [
-        'open_days' => [1, 2, 3, 4, 5, 6], // Mon–Sat (0 = Sunday)
-        'slots'     => ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'],
+    public const ALL_SLOTS = [
+        // Day session
+        '08:30', '09:00', '09:30', '10:00', '10:30', '11:00',
+        '11:30', '12:00', '12:30', '13:00', '13:30', '14:00',
+        '14:30', '15:00', '15:30', '16:00', '16:30',
+        // Night session
+        '20:00', '20:30', '21:00', '21:30',
     ];
 
-    public const ALL_SLOTS = [
-        '08:00', '09:00', '10:00', '11:00', '12:00',
-        '14:00', '15:00', '16:00', '17:00', '18:00',
+    /**
+     * Defaults used when the admin has not saved anything yet.
+     */
+    public const DEFAULTS = [
+        'open_days' => [0, 1, 2, 3, 4, 5, 6], // every day (0 = Sunday)
+        'slots'     => self::ALL_SLOTS,
     ];
 
     public const DAY_NAMES = [

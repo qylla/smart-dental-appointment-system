@@ -41,6 +41,10 @@ return [
         'trust_3'     => '80% want symptom advice',
         'chip_title'  => 'Next available slot',
         'chip_sub'    => 'Tomorrow, 10:30 AM',
+        'chip_today'    => 'Today, :time',
+        'chip_tomorrow' => 'Tomorrow, :time',
+        'chip_date'     => ':date, :time',
+        'chip_none'     => 'Fully booked for the next 2 weeks',
     ],
 
     'treat' => [
@@ -56,6 +60,9 @@ return [
         'empty'           => 'No treatments in this category.',
         'foot_text'       => "Which treatment suits you depends on an examination by the dentist. Book a slot and we'll take a proper look.",
         'foot_cta'        => 'Book an appointment',
+        'price_from'  => 'From RM:amount',
+        'price_ask'   => 'Price after check-up',
+        'price_note'  => "Prices are estimates from the clinic's price list (updated :date). The final cost depends on the dentist's examination.",
 
         'scaling_name'    => 'Scaling & polishing',
         'scaling_desc'    => 'Full removal of plaque and tartar, and treatment for persistent bad breath.',
@@ -133,8 +140,8 @@ return [
         'info_title'    => 'Clinic information',
         'info_desc'     => 'Location, opening hours, and contact details, always one tap away.',
 
-        'remind_title'  => 'Appointment reminders',
-        'remind_desc'   => 'A nudge before your slot, so nothing gets forgotten.',
+        'remind_title'  => 'Email confirmation',
+        'remind_desc'   => 'An email as soon as the clinic confirms your slot, with the date, time and dentist.',
     ],
 
     'stats' => [
@@ -166,6 +173,15 @@ return [
         'guidance_1'     => 'Guidance before',
         'guidance_2'     => 'you even book',
         'guidance_desc'  => "Half of patients don't know what's causing their pain. The symptom checker gives them a starting point instead of a search engine.",
+
+        'map_title'      => 'Find us',
+        'directions'     => 'Open in Google Maps',
+        'gallery_title'     => 'Inside the clinic',
+        'gallery_reception' => 'Front desk',
+        'gallery_lounge'    => 'Waiting lounge',
+        'gallery_kids'      => "Kids' corner",
+        'gallery_room'      => 'Treatment room',
+        'shopfront'         => 'Look for this shopfront',
     ],
 
     'faqs' => [
@@ -179,7 +195,7 @@ return [
         'a_2' => 'No. It gives preliminary guidance on urgency only. A licensed dentist confirms any diagnosis and treatment during your visit.',
 
         'q_3' => 'Can I reschedule or cancel?',
-        'a_3' => 'Yes. You can manage your booking from your dashboard any time before the scheduled slot.',
+        'a_3' => 'Yes. Message the clinic on WhatsApp or give us a call before your slot, and the front desk will change or cancel it for you.',
 
         'q_4' => 'What if my case is urgent?',
         'a_4' => 'Urgent cases get flagged and the earliest available slots are highlighted for you. For severe pain or heavy bleeding, please seek emergency care immediately.',
@@ -188,11 +204,19 @@ return [
     'footer' => [
         'title_1'     => "Tell us what's hurting.",
         'title_2'     => "We'll find you a slot.",
-        'sub'         => 'Drop us a message and the front desk will get back to you, or head straight to booking.',
+        'sub'         => 'Message the front desk on WhatsApp, or head straight to booking.',
         'placeholder' => 'you@example.com',
-        'cta'         => 'Get in touch',
-        'hours'       => 'Mon–Sat, 9AM–6PM',
+        'cta'         => 'Chat on WhatsApp',
+        'book'        => 'Book a slot',
+        'hours'       => 'Daily, 8:30AM–5PM & 8PM–10PM',
         'copy'        => '© 2026 KPZ Dentalcare · FYP by Nur Aqilah Binti Rus Kenedi',
-    ],
 
+    ],
+    'to_top'      => 'Back to top',
+    'logout' => [
+        'title'   => 'Log out?',
+        'text'    => "You'll need to sign in again to continue.",
+        'cancel'  => 'Stay signed in',
+        'confirm' => 'Log out',
+    ],
 ];

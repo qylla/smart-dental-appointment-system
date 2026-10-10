@@ -39,6 +39,10 @@ return [
         'trust_3'     => '80% mahu nasihat simptom',
         'chip_title'  => 'Slot kosong seterusnya',
         'chip_sub'    => 'Esok, 10:30 pagi',
+        'chip_today'    => 'Hari ini, :time',
+        'chip_tomorrow' => 'Esok, :time',
+        'chip_date'     => ':date, :time',
+        'chip_none'     => 'Penuh untuk 2 minggu akan datang',
     ],
 
     'treat' => [
@@ -54,6 +58,10 @@ return [
         'empty'           => 'Tiada rawatan dalam kategori ini.',
         'foot_text'       => 'Rawatan yang sesuai bergantung pada pemeriksaan doktor. Tempah slot dan kami akan periksa dengan teliti.',
         'foot_cta'        => 'Tempah temujanji',
+
+        'price_from'  => 'Dari RM:amount',
+        'price_ask'   => 'Harga selepas pemeriksaan',
+        'price_note'  => 'Harga ialah anggaran daripada senarai harga klinik (dikemas kini :date). Kos sebenar bergantung pada pemeriksaan doktor.',
 
         'scaling_name'    => 'Scaling & polishing',
         'scaling_desc'    => 'Membuang plak dan karang gigi secara menyeluruh, serta merawat masalah nafas berbau.',
@@ -131,8 +139,8 @@ return [
         'info_title'    => 'Maklumat klinik',
         'info_desc'     => 'Lokasi, waktu operasi dan maklumat hubungan, sentiasa satu ketikan sahaja.',
 
-        'remind_title'  => 'Peringatan temujanji',
-        'remind_desc'   => 'Peringatan sebelum slot anda, supaya tiada yang terlupa.',
+        'remind_title'  => 'Pengesahan melalui e-mel',
+        'remind_desc'   => 'E-mel dihantar sebaik sahaja klinik mengesahkan slot anda, lengkap dengan tarikh, masa dan doktor.',
     ],
 
     'stats' => [
@@ -164,6 +172,15 @@ return [
         'guidance_1'     => 'Panduan sebelum',
         'guidance_2'     => 'anda menempah',
         'guidance_desc'  => 'Separuh daripada pesakit tidak tahu punca kesakitan mereka. Penyemak simptom memberi titik permulaan, bukan sekadar hasil carian internet.',
+
+        'map_title'      => 'Lokasi kami',
+        'directions'     => 'Buka di Google Maps',
+        'gallery_title'     => 'Di dalam klinik',
+        'gallery_reception' => 'Kaunter',
+        'gallery_lounge'    => 'Ruang menunggu',
+        'gallery_kids'      => 'Sudut kanak-kanak',
+        'gallery_room'      => 'Bilik rawatan',
+        'shopfront'         => 'Cari kedai ini',
     ],
 
     'faqs' => [
@@ -177,7 +194,7 @@ return [
         'a_2' => 'Tidak. Ia hanya memberi panduan awal tentang tahap kesegeraan. Doktor gigi bertauliah akan mengesahkan sebarang diagnosis dan rawatan semasa kunjungan anda.',
 
         'q_3' => 'Boleh saya tukar tarikh atau batalkan?',
-        'a_3' => 'Boleh. Anda boleh urus tempahan daripada papan pemuka anda pada bila-bila masa sebelum slot yang dijadualkan.',
+        'a_3' => 'Boleh. Hantar mesej WhatsApp atau telefon klinik sebelum slot anda, dan kaunter akan menukar atau membatalkannya untuk anda.',
 
         'q_4' => 'Bagaimana jika kes saya kecemasan?',
         'a_4' => 'Kes segera akan ditandakan dan slot terawal yang ada akan diserlahkan untuk anda. Untuk kesakitan teruk atau pendarahan berat, sila dapatkan rawatan kecemasan dengan segera.',
@@ -186,11 +203,19 @@ return [
     'footer' => [
         'title_1'     => 'Beritahu kami di mana sakitnya.',
         'title_2'     => 'Kami akan carikan slot.',
-        'sub'         => 'Hantar mesej kepada kami dan kaunter akan menghubungi anda, atau terus ke tempahan.',
+        'sub'         => 'Hantar mesej kepada kaunter melalui WhatsApp, atau terus ke tempahan.',
         'placeholder' => 'anda@contoh.com',
-        'cta'         => 'Hubungi kami',
-        'hours'       => 'Isnin–Sabtu, 9 pagi–6 petang',
+        'cta'         => 'Mesej di WhatsApp',
+        'book'        => 'Tempah slot',
+        'hours'       => 'Setiap hari, 8:30 pagi–5 petang & 8–10 malam',
         'copy'        => '© 2026 KPZ Dentalcare · FYP oleh Nur Aqilah Binti Rus Kenedi',
-    ],
 
+    ],
+    'to_top'      => 'Kembali ke atas',
+    'logout' => [
+        'title'   => 'Log keluar?',
+        'text'    => "Anda perlu log masuk semula untuk meneruskan.",
+        'cancel'  => 'Terus log masuk',
+        'confirm' => 'Log keluar',
+    ],
 ];

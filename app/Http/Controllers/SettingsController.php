@@ -26,18 +26,32 @@ class SettingsController extends Controller
         ]);
     }
 
+    
     /**
-     * Update name, email and phone.
+     * Update name, email, phone, and date of birth.
+     *
+     * Date of birth can only be set once. After that it is locked, so a
+     * patient's age record can't be changed casually. Corrections go
+     * through the clinic.
      */
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = Auth::user();
 
-        $data = $request->validate([
+        $rules = [
             'name'  => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'phone' => ['required', 'string', 'max:20'],
-        ], [
+        ];
+
+        // Only accept a date of birth if none is saved yet. validate() returns
+        // only the fields it has rules for, so once this rule is left out,
+        // any date_of_birth sent in the request is simply dropped.
+        if ($user->date_of_birth === null) {
+            $rules['date_of_birth'] = ['nullable', 'date', 'before:today'];
+        }
+
+        $data = $request->validate($rules, [
             'email.unique' => 'That email is already used by another account.',
         ]);
 

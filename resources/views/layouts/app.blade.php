@@ -11,9 +11,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
     :root {
-        --vanilla: #FFF8E2;
-        --buttercream: #FFEFB9;
-        --powder: #BCD1DE;
+        --vanilla: #FBF8F3;
+        --buttercream: #EFE6DA;
+        --powder: #B7C4B1;
         --walnut: #5E442E;
     }
 
@@ -61,7 +61,7 @@
 
     /* Input focus glow */
     .form-control:focus {
-        box-shadow: 0 0 0 0.2rem rgba(188,209,222,0.5);
+        box-shadow: 0 0 0 0.2rem rgba(183,196,177,0.5);
         border-color: var(--powder);
         transition: all 0.3s ease;
     }
@@ -96,7 +96,12 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    @include('partials.whatsapp-float')
+       {{-- WhatsApp is for patients and visitors to reach the clinic, so staff pages don't need it --}}
+    @unless (request()->routeIs('admin.*', 'doctor.*'))
+        @include('partials.whatsapp-float')
+    @endunless
+
+    @include('partials.logout-confirm')
     
 </body>
 </html>

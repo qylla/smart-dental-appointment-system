@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\ClinicSetting;
 use App\Models\SymptomCheck;
 use App\Models\User;
+use App\Services\AdminNotifications;
+use App\Services\AppointmentMailer;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -13,17 +17,29 @@ use Illuminate\View\View;
 
 class AdminController extends Controller
 {
-    public function dashboard(Request $request): View
+    /**
+     * The three ways an appointment can reach the clinic.
+     */
+    public const CHANNELS = [
+        'online'  => 'Online',
+        'walk_in' => 'Walk-in',
+        'phone'   => 'Phone',
+    ];
+
+    public function dashboard(Request $request, AdminNotifications $notifications): View
     {
         $weekStart = today()->startOfWeek();
 
         return view('admin.dashboard', [
+            'notifications' => $notifications->items(),
             'stats'        => $this->stats($weekStart),
             'charts'       => $this->charts(),
             'appointments' => $this->appointments($request),
             'doctors'      => User::doctors()->orderBy('name')->get(),
             'filter'       => $request->query('filter', 'all'),
             'day'          => $request->query('day', 'today'),
+            'channel'      => $request->query('channel', 'all'),
+            'channels'     => self::CHANNELS,
         ]);
     }
 
@@ -66,17 +82,55 @@ class AdminController extends Controller
         ]);
     }
 
+
+
     /**
      * Update the status of a booking. This is the clinic approving,
      * rejecting or closing off an appointment.
      */
-    public function updateStatus(Request $request, Appointment $appointment): RedirectResponse
+    public function updateStatus(Request $request, Appointment $appointment, AppointmentMailer $mailer): RedirectResponse
     {
         $data = $request->validate([
             'status' => ['required', 'in:pending,confirmed,completed,cancelled,no_show'],
         ]);
 
-        $appointment->update(['status' => $data['status']]);
+        // Only active appointments can change, and only to a valid next status.
+        // Completed, cancelled and no-show are final, so they never appear here.
+        $allowed = [
+            'pending'   => ['confirmed', 'completed', 'cancelled'],
+            'confirmed' => ['completed', 'cancelled', 'no_show'],
+        ];
+
+        if (! in_array($data['status'], $allowed[$appointment->status] ?? [], true)) {
+            return back()->withErrors([
+                'reassign' => 'This appointment is already ' . str_replace('_', ' ', $appointment->status)
+                    . ' and can no longer be changed.',
+            ]);
+        }
+
+        $wasConfirmed = $appointment->status === 'confirmed';
+
+        try {
+            $appointment->update(['status' => $data['status']]);
+        } catch (QueryException $e) {
+            // 1062 = the unique_active_doctor_slot index. Happens when a
+            // cancelled appointment is brought back but its dentist has since
+            // been booked for that same slot by someone else.
+            if (($e->errorInfo[1] ?? null) === 1062) {
+                return back()->withErrors([
+                    'reassign' => 'That dentist already has another booking at this time. '
+                        . 'Reassign this appointment to a different dentist first, then confirm it.',
+                ]);
+            }
+
+            throw $e;
+        }
+
+        // Email the patient only when the appointment actually becomes
+        // confirmed, not every time the button is pressed.
+        if ($data['status'] === 'confirmed' && ! $wasConfirmed) {
+            $mailer->confirmed($appointment);
+        }
 
         $labels = [
             'confirmed' => 'confirmed',
@@ -104,9 +158,12 @@ class AdminController extends Controller
             'doctor_id' => ['required', 'exists:users,id'],
         ]);
 
+        // Only active bookings count. A cancelled or completed appointment
+        // in that slot doesn't stop the dentist taking this one.
         $clash = Appointment::where('doctor_id', $data['doctor_id'])
             ->where('appointment_date', $appointment->appointment_date)
             ->where('appointment_time', $appointment->appointment_time)
+            ->whereIn('status', ['pending', 'confirmed'])
             ->where('id', '!=', $appointment->id)
             ->exists();
 
@@ -162,6 +219,8 @@ class AdminController extends Controller
             'symptoms' => $this->symptomSeries(),
             'urgency'  => $this->urgencySeries(),
             'peak'     => $this->peakSeries(),
+            'age'      => $this->ageSeries(),
+            'channel'  => $this->channelSeries(),
         ];
     }
 
@@ -230,7 +289,12 @@ class AdminController extends Controller
         ];
     }
 
-    /** Which slots patients actually pick. */
+    /**
+     * Which slots patients actually pick.
+     *
+     * Reads the slot list from clinic settings, so the chart follows
+     * whatever schedule the admin has configured.
+     */
     private function peakSeries(): array
     {
         $rows = Appointment::select('appointment_time', DB::raw('count(*) as total'))
@@ -240,8 +304,8 @@ class AdminController extends Controller
         $labels = [];
         $data   = [];
 
-        foreach (Appointment::SLOTS as $slot) {
-            $labels[] = date('g A', strtotime($slot));
+        foreach (ClinicSetting::get('slots') as $slot) {
+            $labels[] = date('g:i', strtotime($slot));
 
             // Time values may come back as "09:00" or "09:00:00".
             $data[] = (int) ($rows[$slot] ?? $rows[$slot . ':00'] ?? 0);
@@ -250,17 +314,86 @@ class AdminController extends Controller
         return ['labels' => $labels, 'data' => $data];
     }
 
+    /**
+     * Patient age distribution, worked out from date of birth so the
+     * figures stay correct over time rather than going stale.
+     *
+     * Counted in PHP for the same reason as the patients list: a single
+     * clinic's patient table is small, and this keeps the buckets easy
+     * to read and adjust.
+     */
+    private function ageSeries(): array
+    {
+        $buckets = [
+            'Under 18'     => 0,
+            '18-30'        => 0,
+            '31-45'        => 0,
+            '46-60'        => 0,
+            'Over 60'      => 0,
+            'Not given'    => 0,
+        ];
+
+        User::where('role', 'patient')
+            ->pluck('date_of_birth')
+            ->each(function ($dob) use (&$buckets) {
+                if (! $dob) {
+                    $buckets['Not given']++;
+                    return;
+                }
+
+                $age = Carbon::parse($dob)->age;
+
+                $key = match (true) {
+                    $age < 18  => 'Under 18',
+                    $age <= 30 => '18-30',
+                    $age <= 45 => '31-45',
+                    $age <= 60 => '46-60',
+                    default    => 'Over 60',
+                };
+
+                $buckets[$key]++;
+            });
+
+        return [
+            'labels' => array_keys($buckets),
+            'data'   => array_values($buckets),
+        ];
+    }
+
+    /**
+     * How appointments reach the clinic: online, walk-in or phone.
+     *
+     * Tracks whether online booking is actually being adopted, against the
+     * survey baseline where most patients still walked in.
+     */
+    private function channelSeries(): array
+    {
+        $rows = Appointment::select('channel', DB::raw('count(*) as total'))
+            ->groupBy('channel')
+            ->pluck('total', 'channel');
+
+        return [
+            'labels' => array_values(self::CHANNELS),
+            'data'   => array_map(
+                fn($key) => (int) ($rows[$key] ?? 0),
+                array_keys(self::CHANNELS)
+            ),
+        ];
+    }
+
     /* ---------------- Appointment table ---------------- */
 
     private function appointments(Request $request)
     {
-        $day    = $request->query('day', 'today');
-        $filter = $request->query('filter', 'all');
+        $day     = $request->query('day', 'today');
+        $filter  = $request->query('filter', 'all');
+        $channel = $request->query('channel', 'all');
 
         return Appointment::with(['patient', 'symptomCheck', 'doctor'])
             ->when($day === 'today',    fn($q) => $q->whereDate('appointment_date', today()))
             ->when($day === 'upcoming', fn($q) => $q->whereDate('appointment_date', '>', today()))
             ->when($filter !== 'all',   fn($q) => $q->where('status', $filter))
+            ->when(array_key_exists($channel, self::CHANNELS), fn($q) => $q->where('channel', $channel))
             ->orderBy('appointment_date')
             ->orderBy('appointment_time')
             ->get();

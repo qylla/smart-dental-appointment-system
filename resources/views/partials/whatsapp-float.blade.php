@@ -73,7 +73,7 @@
         }
 
         .kwa-float:focus-visible {
-            outline: 3px solid var(--powder, #BCD1DE);
+            outline: 3px solid var(--powder, #B7C4B1);
             outline-offset: 3px;
         }
 

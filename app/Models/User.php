@@ -17,6 +17,7 @@ class User extends Authenticatable
     'password',
     'role',
     'phone',
+    'date_of_birth',
     'specialisation',
     'notify_new_appointment',
     'notify_cancellation',
@@ -26,6 +27,7 @@ class User extends Authenticatable
 protected $casts = [
     'email_verified_at' => 'datetime',
     'password' => 'hashed',
+    'date_of_birth' => 'date',
     'notify_new_appointment' => 'boolean',
     'notify_cancellation' => 'boolean',
     'notify_daily_summary' => 'boolean',
@@ -41,6 +43,7 @@ protected $casts = [
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'date_of_birth'     => 'date',
         ];
     }
 
@@ -98,4 +101,32 @@ protected $casts = [
     {
         return $query->where('role', 'patient');
     }
+
+    /* ---------------- Date of Birth ---------------- */
+        /**
+     * Umur dikira daripada tarikh lahir, bukan disimpan — supaya ia
+     * tidak menjadi basi. Null bagi akaun tanpa tarikh lahir.
+     */
+    public function getAgeAttribute(): ?int
+    {
+        return $this->date_of_birth?->age;
+    }
+
+    /**
+     * Kumpulan umur untuk laporan admin.
+     */
+    public function getAgeGroupAttribute(): string
+    {
+        $age = $this->age;
+
+        return match (true) {
+            $age === null => 'Tidak dinyatakan',
+            $age < 18     => 'Bawah 18',
+            $age <= 30    => '18–30',
+            $age <= 45    => '31–45',
+            $age <= 60    => '46–60',
+            default       => '60 ke atas',
+        };
+    }
 }
+

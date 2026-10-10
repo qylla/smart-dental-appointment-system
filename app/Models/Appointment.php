@@ -19,6 +19,7 @@ class Appointment extends Model
         'patient_note',
         'admin_note',
         'reminder_sent_at',
+        'channel',
     ];
 
     protected function casts(): array

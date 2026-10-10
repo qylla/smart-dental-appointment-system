@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use App\Services\AppointmentMailer;
 
 class BookingController extends Controller
 {
@@ -22,9 +23,10 @@ class BookingController extends Controller
      */
     private const DAYS_AHEAD = 14;
 
-    public function __construct(private GroqService $groq)
-    {
-    }
+    public function __construct(
+        private GroqService $groq,
+        private \App\Services\SlotService $slots,
+    ) {}
 
     /**
      * Show the booking flow.
@@ -36,7 +38,7 @@ class BookingController extends Controller
     {
         return view('booking', [
             'slots'        => ClinicSetting::get('slots'),
-            'availability' => $this->buildAvailability(),
+            'availability' => $this->slots->availability(),
         ]);
     }
 
@@ -122,7 +124,7 @@ class BookingController extends Controller
     /**
      * Confirm the booking.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AppointmentMailer $mailer): RedirectResponse
     {
         $data = $request->validate([
             'symptom_check_id' => ['nullable', 'exists:symptom_checks,id'],
@@ -140,68 +142,31 @@ class BookingController extends Controller
             $check = null;
         }
 
-        $doctors = User::doctors()->pluck('id');
-
-        if ($doctors->isEmpty()) {
-            return back()->withErrors([
-                'slot' => 'No dentist is available right now. Please contact the clinic.',
-            ]);
-        }
-
         try {
-            $appointment = DB::transaction(function () use ($data, $check, $doctors) {
-                // Lock every booking for this exact slot so two people booking
-                // at the same moment are assigned different doctors, not the same one.
-                $busyDoctorIds = Appointment::where('appointment_date', $data['appointment_date'])
-                    ->where('appointment_time', $data['appointment_time'])
-                    ->whereIn('status', ['pending', 'confirmed'])
-                    ->lockForUpdate()
-                    ->pluck('doctor_id')
-                    ->filter()
-                    ->all();
-
-                // Doctors with no booking in this slot are the ones we can assign.
-                $freeDoctors = $doctors->reject(fn ($id) => in_array($id, $busyDoctorIds, true));
-
-                if ($freeDoctors->isEmpty()) {
-                    throw new \RuntimeException('slot_taken');
-                }
-
-                // Load balance: pick the free doctor with the fewest appointments
-                // on that day, so patients are spread evenly across the team.
-                $loads = Appointment::whereDate('appointment_date', $data['appointment_date'])
-                    ->whereIn('status', ['pending', 'confirmed'])
-                    ->whereIn('doctor_id', $freeDoctors)
-                    ->selectRaw('doctor_id, count(*) as total')
-                    ->groupBy('doctor_id')
-                    ->pluck('total', 'doctor_id');
-
-                $doctorId = $freeDoctors
-                    ->sortBy(fn ($id) => $loads[$id] ?? 0)
-                    ->first();
-
-                return Appointment::create([
-                    'user_id'          => Auth::id(),
-                    'doctor_id'        => $doctorId,
-                    'symptom_check_id' => $check?->id,
-                    'appointment_date' => $data['appointment_date'],
-                    'appointment_time' => $data['appointment_time'],
-                    'status'           => 'pending',
-                    'urgency'          => $check?->severity ?? 'routine',
-                    'patient_note'     => $data['patient_note'] ?? null,
-                ]);
-            });
-        } catch (\RuntimeException $e) {
-            return back()->withErrors([
-                'slot' => 'Sorry, that slot was just taken. Please pick another time.',
+            $appointment = $this->slots->book([
+                'user_id'          => Auth::id(),
+                'symptom_check_id' => $check?->id,
+                'appointment_date' => $data['appointment_date'],
+                'appointment_time' => $data['appointment_time'],
+                'urgency'          => $check?->severity ?? 'routine',
+                'patient_note'     => $data['patient_note'] ?? null,
             ]);
         } catch (QueryException $e) {
-            // The unique index on the appointments table is the final guard.
+            // A real database error, not a clash. Let it surface.
+            throw $e;
+        } catch (\RuntimeException $e) {
             return back()->withErrors([
-                'slot' => 'That slot is no longer available. Please pick another time.',
+                'slot' => match ($e->getMessage()) {
+                    'no_doctors' => 'No dentist is available right now. Please contact the clinic.',
+                    'slot_past'  => 'That time has already passed. Please pick a later slot.',
+                    'slot_closed' => 'The clinic is closed at that time. Please pick another slot.',
+                    default      => 'Sorry, that slot was just taken. Please pick another time.',
+                },
             ]);
         }
-
+        // The dentist hears about it now. The patient gets their email
+        // later, when the clinic confirms the booking.
+        $mailer->newForDoctor($appointment);
         return redirect()->route('settings')
             ->with('status', 'Appointment booked for '
                 . $appointment->appointment_date->format('D, j M') . ' at '
@@ -209,60 +174,6 @@ class BookingController extends Controller
     }
 
     /* ---------------- Helpers ---------------- */
-
-    /**
-     * Build a date => [slots] map for the next fortnight.
-     *
-     * With several dentists, a slot is only "booked" once every one of them
-     * is taken at that time. So we count how many doctors are busy per slot
-     * and compare against the total number of doctors.
-     */
-    private function buildAvailability(): array
-    {
-        $start       = today();
-        $end         = today()->addDays(self::DAYS_AHEAD);
-        $openDays    = ClinicSetting::get('open_days');
-        $slots       = ClinicSetting::get('slots');
-        $doctorCount = User::doctors()->count();
-
-        // date => time => number of doctors already booked.
-        $taken = Appointment::whereBetween('appointment_date', [$start, $end])
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->whereNotNull('doctor_id')
-            ->get(['appointment_date', 'appointment_time'])
-            ->groupBy(fn ($a) => $a->appointment_date->toDateString())
-            ->map(fn ($group) => $group
-                ->groupBy(fn ($a) => substr((string) $a->appointment_time, 0, 5))
-                ->map(fn ($slot) => $slot->count()));
-
-        $availability = [];
-
-        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
-            // Skip days the clinic is closed, per admin settings.
-            if (! in_array($day->dayOfWeek, $openDays, true)) {
-                continue;
-            }
-
-            $key      = $day->toDateString();
-            $dayTaken = $taken[$key] ?? collect();
-
-            $availability[] = [
-                'date'  => $key,
-                'dow'   => $day->format('D'),
-                'dnum'  => $day->format('j'),
-                'label' => $day->format('D, j M'),
-                'slots' => collect($slots)->map(fn ($slot) => [
-                    'time'   => $slot,
-                    'label'  => date('g:i A', strtotime($slot)),
-                    // Full only when as many doctors are booked as exist.
-                    'booked' => ($dayTaken[$slot] ?? 0) >= $doctorCount,
-                ])->all(),
-            ];
-        }
-
-        return $availability;
-    }
-
     /**
      * Work out how urgent the reported symptoms are.
      *
@@ -313,8 +224,10 @@ class BookingController extends Controller
         }
 
         // Escalate if the free-text mentions something serious.
-        if ($worst === 'routine'
-            && preg_match('/severe|unbearable|swelling|broken|knocked|bengkak|teruk|sangat sakit/i', $description)) {
+        if (
+            $worst === 'routine'
+            && preg_match('/severe|unbearable|swelling|broken|knocked|bengkak|teruk|sangat sakit/i', $description)
+        ) {
             $worst = 'urgent';
         }
 

@@ -83,9 +83,9 @@
 
 <style>
     :root {
-        --vanilla: #FFF8E2;
-        --buttercream: #FFEFB9;
-        --powder: #BCD1DE;
+        --vanilla: #FBF8F3;
+        --buttercream: #EFE6DA;
+        --powder: #B7C4B1;
         --walnut: #5E442E;
         --walnut-dark: #3f2e1f;
         --ink: #3a2c20;
@@ -106,7 +106,7 @@
     }
 
     .kbk-topbar {
-        background: rgba(255, 248, 226, .9);
+        background: rgba(251, 248, 243, .9);
         backdrop-filter: blur(8px);
         border-bottom: 1px solid rgba(94, 68, 46, .1);
         position: sticky;
@@ -255,7 +255,7 @@
     .kbk-textarea-box textarea:focus {
         outline: none;
         border-color: var(--powder);
-        box-shadow: 0 0 0 3px rgba(188, 209, 222, .4);
+        box-shadow: 0 0 0 3px rgba(183, 196, 177, .4);
     }
 
     .kbk-mic-controls {
@@ -537,6 +537,24 @@
             flex-direction: column;
         }
     }
+
+    /* ===== Mobile fixes ===== */
+    @media (max-width:600px) {
+        .kbk { padding-bottom: 100px; }
+        .kbk-wrap { padding: 0 14px; }
+        .kbk-topbar-inner { height: 58px; gap: 12px; }
+        .kbk-topbar-title { font-size: .95rem; margin-right: auto; }
+        .kbk-guest-badge { font-size: .7rem; padding: 4px 10px; }
+        .kbk-main { padding-top: 26px; }
+        .kbk-h1 { font-size: 1.6rem; }
+        .kbk-chip { padding: 9px 14px; font-size: .82rem; }
+        .kbk-textarea-box textarea { font-size: 16px; }
+        .kbk-gate-actions, .kbk-gate-actions .kpz-btn { width: 100%; }
+    }
+
+    @media (max-width:380px) {
+        .kbk-guest-badge { display: none; }
+    }
 </style>
 
 <script>
@@ -562,9 +580,9 @@
         });
 
         /**
-         * Calls the real backend endpoint. The controller tries the Gemini
+         * Calls the real backend endpoint. The controller tries the Groq
          * API first and falls back to a rule-based check server-side if
-         * Gemini is unavailable — this page never talks to Gemini directly.
+         * the AI is unavailable — this page never talks to the AI directly.
          */
         function getCsrfHeaders() {
             var metaToken = document.querySelector('meta[name="csrf-token"]');

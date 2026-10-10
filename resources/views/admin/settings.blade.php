@@ -11,35 +11,7 @@
 <div class="kad">
 
     <!-- ===== SIDEBAR ===== -->
-    <aside class="kad-side" id="kadSide">
-        <a href="{{ route('home') }}" class="kad-logo">
-            <span class="kad-logo-dots"><i></i><i></i></span>
-            <span>KPZ Admin</span>
-        </a>
-
-        <nav class="kad-menu">
-            <a href="{{ route('admin.dashboard') }}" class="kad-menu-item"><i class='bx bx-grid-alt'></i> Dashboard</a>
-            <a href="{{ route('admin.dashboard') }}#appointments" class="kad-menu-item"><i class='bx bx-calendar'></i> Appointments</a>
-            <a href="{{ route('admin.dashboard') }}#symptoms" class="kad-menu-item"><i class='bx bx-message-dots'></i> Symptom Reports</a>
-            <a href="{{ route('admin.settings') }}" class="kad-menu-item active"><i class='bx bx-cog'></i> Settings</a>
-        </nav>
-
-        <div class="kad-side-foot">
-            <div class="kad-user">
-                <span class="kad-avatar">{{ strtoupper(substr($admin->name, 0, 2)) }}</span>
-                <div>
-                    <strong>{{ $admin->name }}</strong>
-                    <span>Administrator</span>
-                </div>
-            </div>
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="kad-logout"><i class='bx bx-log-out'></i> Log out</button>
-            </form>
-        </div>
-    </aside>
-
-    <div class="kad-overlay" id="kadOverlay"></div>
+        @include('admin.partials.sidebar')
 
     <!-- ===== MAIN ===== -->
     <main class="kad-main">
@@ -111,7 +83,7 @@
                     @csrf @method('PUT')
                     <label class="kset-field"><span>Current password</span>
                         <div class="kset-input"><i class='bx bxs-lock-alt'></i>
-                            <input type="password" name="current_password" required></div>
+                            <input type="password" name="current_password" autocomplete="current-password" required></div>
                     </label>
                     <label class="kset-field"><span>New password</span>
                         <div class="kset-input"><i class='bx bxs-lock-open-alt'></i>
@@ -172,6 +144,79 @@
                     <button type="submit" class="kset-btn kset-btn-dark">Save schedule</button>
                 </form>
             </section>
+
+            @php
+                // Upcoming closures only. Past ones are dropped the next time the list is saved.
+                $closures = collect(\App\Models\ClinicSetting::get('closures') ?? [])
+                    ->filter(fn ($c) => $c['date'] >= today()->toDateString())
+                    ->values();
+            @endphp
+
+            <section class="kad-panel">
+                <div class="kad-panel-head"><div>
+                    <h2>Close a date or slot</h2>
+                    <p>For public holidays, clinic closures, or anything that takes every dentist away at once. Closed times disappear from online booking. Existing appointments are not cancelled. For walk-in patients, book them in as an appointment instead, so the other dentists stay available.</p>
+                </div></div>
+
+                @if ($errors->getBag('closure')->any())
+                    <div class="kset-errors">
+                        @foreach ($errors->getBag('closure')->all() as $e) <p>{{ $e }}</p> @endforeach
+                    </div>
+                @endif
+
+                <form action="{{ route('admin.settings.closures.store') }}" method="POST">
+                    @csrf
+                    <div class="kset-field-row kset-field-row-3">
+                        <label class="kset-field"><span>Date</span>
+                            <div class="kset-input"><i class='bx bxs-calendar'></i>
+                                <input type="date" name="date" min="{{ today()->toDateString() }}"
+                                       value="{{ old('date') }}" required></div>
+                        </label>
+                        <label class="kset-field"><span>Time</span>
+                            <div class="kset-input"><i class='bx bxs-time'></i>
+                                <select name="time">
+                                    <option value="">Whole day</option>
+                                    @foreach ($slots as $slot)
+                                        <option value="{{ $slot }}" {{ old('time') === $slot ? 'selected' : '' }}>
+                                            {{ date('g:i A', strtotime($slot)) }}
+                                        </option>
+                                    @endforeach
+                                </select></div>
+                        </label>
+                        <label class="kset-field"><span>Reason (optional)</span>
+                            <div class="kset-input"><i class='bx bxs-note'></i>
+                                <input type="text" name="reason" maxlength="100" value="{{ old('reason') }}"
+                                       placeholder="e.g. Hari Raya, staff meeting"></div>
+                        </label>
+                    </div>
+                    <button type="submit" class="kset-btn kset-btn-dark"><i class='bx bx-block'></i> Close this time</button>
+                </form>
+
+                <div class="kset-closures">
+                    <span class="kset-block-label">Upcoming closures</span>
+
+                    @forelse ($closures as $c)
+                        @php $cDate = \Illuminate\Support\Carbon::parse($c['date']); @endphp
+                        <div class="kset-closure">
+                            <div class="kset-closure-date">
+                                <span class="d">{{ $cDate->format('j') }}</span>
+                                <span class="m">{{ $cDate->format('M') }}</span>
+                            </div>
+                            <div class="kset-closure-body">
+                                <strong>{{ $c['time'] ? date('g:i A', strtotime($c['time'])) : 'Whole day' }}</strong>
+                                <span>{{ $cDate->format('l, Y') }}@if (!empty($c['reason'])) &middot; {{ $c['reason'] }}@endif</span>
+                            </div>
+                            <form action="{{ route('admin.settings.closures.destroy', $c['id']) }}" method="POST"
+                                  onsubmit="return confirm('Reopen this time for booking?')">
+                                @csrf @method('DELETE')
+                                <button class="kad-act no" title="Remove closure"><i class='bx bx-trash'></i></button>
+                            </form>
+                        </div>
+                    @empty
+                        <p class="kad-muted">No upcoming closures. Every open day and slot is bookable.</p>
+                    @endforelse
+                </div>
+            </section>
         </div>
 
         <!-- ============ STAFF ============ -->
@@ -226,12 +271,12 @@
                     <p>Creates a login for a new doctor or admin.</p>
                 </div></div>
 
-                <form action="{{ route('admin.settings.staff.store') }}" method="POST" id="staffForm">
+                <form action="{{ route('admin.settings.staff.store') }}" method="POST" id="staffForm" autocomplete="off">
                     @csrf
                     <div class="kset-field-row">
                         <label class="kset-field"><span>Full name</span>
                             <div class="kset-input"><i class='bx bxs-user'></i>
-                                <input type="text" name="name" value="{{ old('name') }}" required></div>
+                                <input type="text" name="name" value="{{ old('name') }}" autocomplete="off" required></div>
                         </label>
                         <label class="kset-field"><span>Role</span>
                             <div class="kset-input"><i class='bx bxs-id-card'></i>
@@ -245,7 +290,7 @@
                     <div class="kset-field-row">
                         <label class="kset-field"><span>Email</span>
                             <div class="kset-input"><i class='bx bxs-envelope'></i>
-                                <input type="email" name="email" value="{{ old('email') }}" required></div>
+                                <input type="email" name="email" value="{{ old('email') }}" autocomplete="off" required></div>
                         </label>
                         <label class="kset-field"><span>Phone</span>
                             <div class="kset-input"><i class='bx bxs-phone'></i>
@@ -263,11 +308,11 @@
                     <div class="kset-field-row">
                         <label class="kset-field"><span>Password</span>
                             <div class="kset-input"><i class='bx bxs-lock-alt'></i>
-                                <input type="password" name="password" required></div>
+                                <input type="password" name="password" autocomplete="new-password" required></div>
                         </label>
                         <label class="kset-field"><span>Confirm password</span>
                             <div class="kset-input"><i class='bx bxs-lock-alt'></i>
-                                <input type="password" name="password_confirmation" required></div>
+                                <input type="password" name="password_confirmation" autocomplete="new-password" required></div>
                         </label>
                     </div>
 
@@ -281,7 +326,7 @@
 
 <style>
 :root{
-    --vanilla:#FFF8E2; --buttercream:#FFEFB9; --powder:#BCD1DE;
+    --vanilla:#FBF8F3; --buttercream:#EFE6DA; --powder:#B7C4B1;
     --walnut:#5E442E; --walnut-dark:#2f2318; --ink:#3a2c20; --muted:#7a6a5a;
 }
 .kad{ display:flex; min-height:100vh; background:var(--buttercream); font-family:'Plus Jakarta Sans',sans-serif; color:var(--ink); }
@@ -295,17 +340,17 @@
 .kad-logo-dots i:first-child{ left:0; background:var(--buttercream); }
 .kad-logo-dots i:last-child{ left:12px; background:var(--powder); }
 .kad-menu{ display:flex; flex-direction:column; gap:4px; flex:1; }
-.kad-menu-item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; text-decoration:none; color:rgba(255,248,226,.6); font-weight:600; font-size:.92rem; transition:background .2s,color .2s; }
+.kad-menu-item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; text-decoration:none; color:rgba(251,248,243,.6); font-weight:600; font-size:.92rem; transition:background .2s,color .2s; }
 .kad-menu-item i{ font-size:1.2rem; }
-.kad-menu-item:hover{ background:rgba(255,248,226,.07); color:var(--vanilla); }
+.kad-menu-item:hover{ background:rgba(251,248,243,.07); color:var(--vanilla); }
 .kad-menu-item.active{ background:var(--walnut); color:var(--vanilla); }
-.kad-side-foot{ border-top:1px solid rgba(255,248,226,.12); padding-top:18px; }
+.kad-side-foot{ border-top:1px solid rgba(251,248,243,.12); padding-top:18px; }
 .kad-user{ display:flex; align-items:center; gap:12px; padding:0 6px 16px; }
 .kad-user strong{ display:block; font-size:.88rem; color:var(--vanilla); }
-.kad-user span{ font-size:.75rem; color:rgba(255,248,226,.5); }
+.kad-user span{ font-size:.75rem; color:rgba(251,248,243,.5); }
 .kad-avatar{ width:38px; height:38px; flex-shrink:0; border-radius:50%; background:var(--powder); color:var(--walnut); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.85rem; }
-.kad-logout{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; color:rgba(255,248,226,.6); font-size:.88rem; font-weight:600; width:100%; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left; }
-.kad-logout:hover{ background:rgba(255,248,226,.07); color:var(--vanilla); }
+.kad-logout{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; color:rgba(251,248,243,.6); font-size:.88rem; font-weight:600; width:100%; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left; }
+.kad-logout:hover{ background:rgba(251,248,243,.07); color:var(--vanilla); }
 .kad-overlay{ display:none; position:fixed; inset:0; background:rgba(47,35,24,.5); z-index:55; }
 .kad-overlay.show{ display:block; }
 
@@ -337,10 +382,11 @@
 .kset-field{ display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
 .kset-field > span{ font-size:.8rem; font-weight:800; color:var(--walnut); }
 .kset-input{ display:flex; align-items:center; gap:10px; border:1px solid rgba(94,68,46,.22); border-radius:14px; padding:12px 16px; background:#fff; transition:border-color .2s,box-shadow .2s; }
-.kset-input:focus-within{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(188,209,222,.4); }
+.kset-input:focus-within{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(183,196,177,.4); }
 .kset-input i{ color:var(--walnut); font-size:1.1rem; flex-shrink:0; }
 .kset-input input, .kset-input select{ border:none; background:none; outline:none; width:100%; font-family:inherit; font-size:.92rem; color:var(--ink); }
 .kset-field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.kset-field-row-3{ grid-template-columns:1fr 1fr 1.4fr; }
 
 .kset-errors{ background:#fbdada; border-left:4px solid #a13d3d; border-radius:12px; padding:12px 16px; margin-bottom:20px; }
 .kset-errors p{ margin:0; font-size:.85rem; color:#8a2f2f; font-weight:600; line-height:1.5; }
@@ -354,6 +400,18 @@
 .kset-toggle input{ position:absolute; opacity:0; width:0; height:0; }
 .kset-toggle span{ display:inline-flex; align-items:center; justify-content:center; padding:11px 18px; border-radius:12px; border:1.5px solid rgba(94,68,46,.25); background:#fff; font-size:.85rem; font-weight:700; color:var(--walnut); transition:all .18s; }
 .kset-toggle input:checked + span{ background:var(--walnut); border-color:var(--walnut); color:var(--vanilla); }
+
+/* CLOSURES */
+.kset-closures{ margin-top:26px; padding-top:22px; border-top:1px dashed rgba(94,68,46,.2); }
+.kset-closure{ display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid rgba(94,68,46,.08); }
+.kset-closure:last-child{ border-bottom:none; }
+.kset-closure-date{ width:52px; flex-shrink:0; text-align:center; background:#fff; border:1px solid rgba(94,68,46,.12); border-radius:14px; padding:7px 0; }
+.kset-closure-date .d{ display:block; font-family:'Fraunces',serif; font-size:1.2rem; font-weight:600; color:var(--walnut); line-height:1; }
+.kset-closure-date .m{ display:block; font-size:.68rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+.kset-closure-body{ flex:1; min-width:0; }
+.kset-closure-body strong{ display:block; font-size:.92rem; color:var(--ink); }
+.kset-closure-body span{ display:block; font-size:.8rem; color:var(--muted); margin-top:2px; }
+.kset-closure form{ margin:0; }
 
 /* BUTTONS */
 .kset-btn{ display:inline-flex; align-items:center; justify-content:center; gap:7px; border-radius:999px; font-weight:700; font-size:.9rem; border:1px solid transparent; cursor:pointer; padding:12px 24px; font-family:inherit; text-decoration:none; transition:transform .22s,box-shadow .22s,background .22s; }
@@ -384,10 +442,26 @@
     .kad-side.open{ left:0; }
     .kad-burger{ display:flex; align-items:center; justify-content:center; }
     .kad-main{ padding:20px 18px 40px; }
+    .kset-field-row-3{ grid-template-columns:1fr 1fr; }
 }
 @media (max-width:540px){
     .kset-field-row{ grid-template-columns:1fr; }
     .kad-title{ font-size:1.4rem; }
+}
+
+/* ===== Mobile fixes ===== */
+@media (max-width:820px){
+    .kad-side{ overflow-y:auto; }
+    .kad-top{ align-items:flex-start; gap:12px; margin-bottom:20px; }
+    .kad-top > div:not([class]){ min-width:0; }
+    .kad-panel{ padding:18px 16px; border-radius:20px; }
+    /* 16px stops iOS zooming in when a field is tapped */
+    .kset-input input, .kset-input select, .kset-input textarea, .kad-search input{ font-size:16px; }
+}
+@media (max-width:540px){
+    /* three equal tabs on one row instead of wrapping */
+    .kset-tabs{ width:100%; display:grid; grid-template-columns:repeat(3,1fr); border-radius:16px; }
+    .kset-tabs button{ padding:9px 6px; font-size:.8rem; line-height:1.25; border-radius:12px; }
 }
 </style>
 
@@ -419,8 +493,9 @@
     roleSel.addEventListener('change', toggleSpec);
     toggleSpec();
 
-    /* reopen the tab that had the last action or an error */
-    var tab = @json(session('tab', ''));
+    /* reopen the tab that had the last action or an error
+       (a failed closure form doesn't set 'tab', so check its error bag too) */
+    var tab = @json(session('tab', $errors->getBag('closure')->any() ? 'schedule' : ''));
     if(tab){
         var b = document.querySelector('#setTabs button[data-tab="' + tab + '"]');
         if(b) b.click();

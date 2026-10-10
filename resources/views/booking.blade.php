@@ -157,9 +157,9 @@
 
 <style>
 :root{
-    --vanilla:#FFF8E2;
-    --buttercream:#FFEFB9;
-    --powder:#BCD1DE;
+    --vanilla:#FBF8F3;
+    --buttercream:#EFE6DA;
+    --powder:#B7C4B1;
     --walnut:#5E442E;
     --walnut-dark:#3f2e1f;
     --ink:#3a2c20;
@@ -167,7 +167,7 @@
 .kbk{ min-height:100vh; background:var(--vanilla); font-family:'Plus Jakarta Sans',sans-serif; color:var(--ink); padding-bottom:60px; }
 .kbk-wrap{ max-width:760px; margin:0 auto; padding:0 20px; }
 
-.kbk-topbar{ background:rgba(255,248,226,.9); backdrop-filter:blur(8px); border-bottom:1px solid rgba(94,68,46,.1); position:sticky; top:0; z-index:20; }
+.kbk-topbar{ background:rgba(251,248,243,.9); backdrop-filter:blur(8px); border-bottom:1px solid rgba(94,68,46,.1); position:sticky; top:0; z-index:20; }
 .kbk-topbar-inner{ display:flex; align-items:center; justify-content:space-between; height:66px; }
 .kbk-back{ display:flex; align-items:center; gap:6px; text-decoration:none; color:var(--walnut); font-weight:700; font-size:.9rem; }
 .kbk-back:hover{ color:var(--walnut-dark); }
@@ -209,7 +209,7 @@
 .kbk-textarea-wrap span{ display:block; font-size:.8rem; font-weight:700; color:var(--walnut); margin-bottom:6px; }
 .kbk-textarea-box{ position:relative; }
 .kbk-textarea-box textarea{ width:100%; border:1px solid rgba(94,68,46,.25); border-radius:14px; padding:14px 92px 14px 16px; font-family:'Plus Jakarta Sans',sans-serif; font-size:.92rem; color:var(--ink); background:var(--vanilla); resize:vertical; }
-.kbk-textarea-box textarea:focus{ outline:none; border-color:var(--powder); box-shadow:0 0 0 3px rgba(188,209,222,.4); }
+.kbk-textarea-box textarea:focus{ outline:none; border-color:var(--powder); box-shadow:0 0 0 3px rgba(183,196,177,.4); }
 .kbk-mic-controls{ position:absolute; right:10px; top:10px; display:flex; align-items:center; gap:6px; }
 .kbk-lang-toggle{ width:34px; height:34px; border-radius:50%; border:1.5px solid rgba(94,68,46,.25); background:var(--vanilla); color:var(--walnut); font-size:.68rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .2s ease, border-color .2s ease; }
 .kbk-lang-toggle:hover{ border-color:var(--walnut); }
@@ -259,8 +259,19 @@
 .kbk-date-chip.selected .dow,.kbk-date-chip.selected .dnum{ color:var(--vanilla); }
 .kbk-date-chip.recommended:not(.selected){ border-color:#b5651d; }
 .kbk-date-chip.recommended:not(.selected) .dnum{ color:#b5651d; }
+/* Days with nothing bookable (every slot has passed or is taken) */
+.kbk-date-chip.booked{ background:#efe6d2; border-color:rgba(94,68,46,.12); cursor:not-allowed; opacity:.55; }
+.kbk-date-chip.booked:hover{ border-color:rgba(94,68,46,.12); }
+.kbk-date-chip.booked .dow,
+.kbk-date-chip.booked .dnum{ color:#a89a88; }
 
-.kbk-times{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:30px; }
+.kbk-times{ margin-bottom:30px; }
+/* Time slots are split into the clinic's two sessions (day / night) */
+.kbk-time-group + .kbk-time-group{ margin-top:22px; padding-top:20px; border-top:1px dashed rgba(94,68,46,.2); }
+.kbk-time-group-head{ display:flex; align-items:center; gap:8px; font-size:.78rem; font-weight:700; color:var(--walnut); text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px; }
+.kbk-time-group-head i{ font-size:1.1rem; }
+.kbk-time-group-head .kbk-time-count{ margin-left:auto; font-size:.78rem; font-weight:600; text-transform:none; letter-spacing:0; color:#8a7864; }
+.kbk-time-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
 .kbk-time-chip{ padding:12px 0; border-radius:12px; border:1.5px solid rgba(94,68,46,.25); background:var(--vanilla); text-align:center; font-weight:700; color:var(--walnut); cursor:pointer; font-size:.9rem; transition:all .18s ease; }
 .kbk-time-chip:hover{ border-color:var(--walnut); }
 .kbk-time-chip.selected{ background:var(--walnut); border-color:var(--walnut); color:var(--vanilla); }
@@ -288,8 +299,35 @@
 @media (max-width:600px){
     .kbk-card{ padding:26px 20px; }
     .kbk-step-label{ display:none; }
-    .kbk-times{ grid-template-columns:repeat(2,1fr); }
+    .kbk-time-grid{ grid-template-columns:repeat(2,1fr); }
     .kbk-step-line{ width:34px; }
+}
+
+/* ===== Mobile fixes ===== */
+@media (max-width:600px){
+    .kbk{ padding-bottom:100px; } /* room for the floating WhatsApp button */
+    .kbk-wrap{ padding:0 14px; }
+    .kbk-topbar-inner{ height:58px; gap:10px; }
+    .kbk-topbar-title{ font-size:.95rem; }
+    .kbk-topbar-spacer{ width:44px; }
+    .kbk-main{ padding-top:22px; }
+    .kbk-steps{ margin-bottom:22px; }
+    .kbk-card{ padding:24px 18px; }
+    .kbk-h2{ font-size:1.4rem; }
+    .kbk-sub{ margin-bottom:20px; }
+    .kbk-chip{ padding:9px 14px; font-size:.82rem; }
+    .kbk-textarea-box textarea{ font-size:16px; }
+    /* 3 columns keeps 21 slots from becoming a very long list */
+    .kbk-time-grid{ grid-template-columns:repeat(3,1fr); gap:8px; }
+    .kbk-time-chip{ font-size:.8rem; padding:11px 0; }
+    .kbk-time-group-head{ flex-wrap:wrap; }
+    /* stack the buttons, main action on top */
+    .kbk-step2-actions{ flex-direction:column-reverse; gap:10px; }
+    .kbk-ticket{ width:100%; max-width:320px; padding:20px 18px; }
+    .kbk-ticket-row{ gap:12px; }
+}
+@media (max-width:350px){
+    .kbk-time-grid{ grid-template-columns:repeat(2,1fr); }
 }
 </style>
 
@@ -300,6 +338,9 @@
 
     var state = { symptoms: [], severity: 'routine', checkId: null,
                   date: null, dateLabel: null, time: null, timeLabel: null };
+
+    /* Indexes (into AVAILABILITY) of the days marked "recommended". */
+    var recommendedDays = [];
 
     /* ---------------- STEP INDICATOR ---------------- */
     function setStep(n){
@@ -400,16 +441,25 @@
     function buildDates(){
         var wrap = document.getElementById('kbkDates');
         wrap.innerHTML = '';
+        recommendedDays = [];
 
         AVAILABILITY.forEach(function(day, i){
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'kbk-date-chip';
 
-            /* Every slot gone means the clinic is full that day. */
+            /* Every slot gone (passed or taken) means nothing to book that day. */
             var full = day.slots.every(function(s){ return s.booked; });
-            if(full) btn.classList.add('booked');
-            if(state.severity !== 'routine' && i < 2 && !full) btn.classList.add('recommended');
+
+            if(full){
+                btn.classList.add('booked');
+                btn.disabled = true;
+                btn.title = 'No slots available';
+            } else if(state.severity !== 'routine' && recommendedDays.length < 2){
+                /* Recommend the first two days that still have room. */
+                btn.classList.add('recommended');
+                recommendedDays.push(i);
+            }
 
             btn.dataset.index = i;
             btn.innerHTML = '<span class="dow">' + day.dow + '</span>' +
@@ -440,28 +490,66 @@
         state.timeLabel = null;
         checkContinue();
 
-        day.slots.forEach(function(slot, i){
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'kbk-time-chip';
-            btn.textContent = slot.label;
+        /* On a recommended day, highlight the first two slots that are still open. */
+        var highlightLeft = recommendedDays.indexOf(dayIndex) > -1 ? 2 : 0;
 
-            if(slot.booked){
-                btn.classList.add('booked');
-                btn.title = 'Already taken';
-            } else {
-                if(state.severity !== 'routine' && dayIndex < 2 && i < 2){
-                    btn.classList.add('recommended');
+        /* Split the day into the clinic's two sessions. Slot times are
+           zero-padded "HH:MM", so a plain string comparison is safe.
+           Anything before 6 PM counts as the day session. */
+        var sessions = [
+            { name: 'Day session',   icon: 'bx-sun',
+              slots: day.slots.filter(function(s){ return s.time < '18:00'; }) },
+            { name: 'Night session', icon: 'bx-moon',
+              slots: day.slots.filter(function(s){ return s.time >= '18:00'; }) }
+        ];
+
+        sessions.forEach(function(session){
+            /* Skip a session the admin has switched off entirely. */
+            if(!session.slots.length) return;
+
+            var open = session.slots.filter(function(s){ return !s.booked; }).length;
+
+            var group = document.createElement('div');
+            group.className = 'kbk-time-group';
+
+            var head = document.createElement('div');
+            head.className = 'kbk-time-group-head';
+            head.innerHTML = "<i class='bx " + session.icon + "'></i> " + session.name +
+                '<span class="kbk-time-count">' +
+                (open ? open + ' available' : 'No slots left') + '</span>';
+            group.appendChild(head);
+
+            var grid = document.createElement('div');
+            grid.className = 'kbk-time-grid';
+
+            session.slots.forEach(function(slot){
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'kbk-time-chip';
+                btn.textContent = slot.label;
+
+                if(slot.booked){
+                    btn.classList.add('booked');
+                    btn.disabled = true;
+                    btn.title = slot.past ? 'This time has passed' : 'Already taken';
+                } else {
+                    if(highlightLeft > 0){
+                        btn.classList.add('recommended');
+                        highlightLeft--;
+                    }
+                    btn.addEventListener('click', function(){
+                        document.querySelectorAll('.kbk-time-chip').forEach(function(c){ c.classList.remove('selected'); });
+                        this.classList.add('selected');
+                        state.time      = slot.time;
+                        state.timeLabel = slot.label;
+                        checkContinue();
+                    });
                 }
-                btn.addEventListener('click', function(){
-                    document.querySelectorAll('.kbk-time-chip').forEach(function(c){ c.classList.remove('selected'); });
-                    this.classList.add('selected');
-                    state.time      = slot.time;
-                    state.timeLabel = slot.label;
-                    checkContinue();
-                });
-            }
-            wrap.appendChild(btn);
+                grid.appendChild(btn);
+            });
+
+            group.appendChild(grid);
+            wrap.appendChild(group);
         });
     }
 
@@ -591,7 +679,7 @@
     }
 
     /* If the slot was taken while reviewing, drop the patient back on step 2. */
-    @if ($errors ->has('slot'))
+    @if ($errors->has('slot'))
         buildDates();
         setStep(2);
     @endif

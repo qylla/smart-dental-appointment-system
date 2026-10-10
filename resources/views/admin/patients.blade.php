@@ -11,36 +11,7 @@
 <div class="kad">
 
     <!-- ===== SIDEBAR ===== -->
-    <aside class="kad-side" id="kadSide">
-        <a href="{{ route('home') }}" class="kad-logo">
-            <span class="kad-logo-dots"><i></i><i></i></span>
-            <span>KPZ Admin</span>
-        </a>
-
-        <nav class="kad-menu">
-            <a href="{{ route('admin.dashboard') }}" class="kad-menu-item"><i class='bx bx-grid-alt'></i> Dashboard</a>
-            <a href="{{ route('admin.dashboard') }}#appointments" class="kad-menu-item"><i class='bx bx-calendar'></i> Appointments</a>
-            <a href="{{ route('admin.dashboard') }}#symptoms" class="kad-menu-item"><i class='bx bx-message-dots'></i> Symptom Reports</a>
-            <a href="{{ route('admin.patients') }}" class="kad-menu-item active"><i class='bx bx-user'></i> Patients</a>
-            <a href="{{ route('admin.settings') }}" class="kad-menu-item"><i class='bx bx-cog'></i> Settings</a>
-        </nav>
-
-        <div class="kad-side-foot">
-            <div class="kad-user">
-                <span class="kad-avatar">{{ collect(explode(' ', auth()->user()->name))->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('') }}</span>
-                <div>
-                    <strong>{{ auth()->user()->name }}</strong>
-                    <span>Administrator</span>
-                </div>
-            </div>
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="kad-logout"><i class='bx bx-log-out'></i> Log out</button>
-            </form>
-        </div>
-    </aside>
-
-    <div class="kad-overlay" id="kadOverlay"></div>
+       @include('admin.partials.sidebar')
 
     <!-- ===== MAIN ===== -->
     <main class="kad-main">
@@ -145,9 +116,9 @@
 
 <style>
 :root{
-    --vanilla:#FFF8E2;
-    --buttercream:#FFEFB9;
-    --powder:#BCD1DE;
+    --vanilla:#FBF8F3;
+    --buttercream:#EFE6DA;
+    --powder:#B7C4B1;
     --walnut:#5E442E;
     --walnut-dark:#2f2318;
     --ink:#3a2c20;
@@ -164,18 +135,18 @@
 .kad-logo-dots i:last-child{ left:12px; background:var(--powder); }
 
 .kad-menu{ display:flex; flex-direction:column; gap:4px; flex:1; }
-.kad-menu-item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; text-decoration:none; color:rgba(255,248,226,.6); font-weight:600; font-size:.92rem; transition:background .2s ease, color .2s ease; }
+.kad-menu-item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; text-decoration:none; color:rgba(251,248,243,.6); font-weight:600; font-size:.92rem; transition:background .2s ease, color .2s ease; }
 .kad-menu-item i{ font-size:1.2rem; }
-.kad-menu-item:hover{ background:rgba(255,248,226,.07); color:var(--vanilla); }
+.kad-menu-item:hover{ background:rgba(251,248,243,.07); color:var(--vanilla); }
 .kad-menu-item.active{ background:var(--walnut); color:var(--vanilla); }
 
-.kad-side-foot{ border-top:1px solid rgba(255,248,226,.12); padding-top:18px; }
+.kad-side-foot{ border-top:1px solid rgba(251,248,243,.12); padding-top:18px; }
 .kad-user{ display:flex; align-items:center; gap:12px; padding:0 6px 16px; }
 .kad-user strong{ display:block; font-size:.88rem; color:var(--vanilla); }
-.kad-user span{ font-size:.75rem; color:rgba(255,248,226,.5); }
+.kad-user span{ font-size:.75rem; color:rgba(251,248,243,.5); }
 .kad-avatar{ width:38px; height:38px; flex-shrink:0; border-radius:50%; background:var(--powder); color:var(--walnut); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.85rem; }
-.kad-logout{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; text-decoration:none; color:rgba(255,248,226,.6); font-size:.88rem; font-weight:600; width:100%; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left; }
-.kad-logout:hover{ background:rgba(255,248,226,.07); color:var(--vanilla); }
+.kad-logout{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; text-decoration:none; color:rgba(251,248,243,.6); font-size:.88rem; font-weight:600; width:100%; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left; }
+.kad-logout:hover{ background:rgba(251,248,243,.07); color:var(--vanilla); }
 
 .kad-overlay{ display:none; position:fixed; inset:0; background:rgba(47,35,24,.5); z-index:55; }
 .kad-overlay.show{ display:block; }
@@ -194,7 +165,7 @@
 .kad-search{ position:relative; display:flex; align-items:center; }
 .kad-search i.bx-search{ position:absolute; left:14px; color:var(--muted); font-size:1.1rem; pointer-events:none; }
 .kad-search input{ border:1px solid rgba(94,68,46,.2); border-radius:999px; padding:10px 40px 10px 38px; font-family:inherit; font-size:.85rem; color:var(--ink); background:#fff; min-width:220px; outline:none; }
-.kad-search input:focus{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(188,209,222,.4); }
+.kad-search input:focus{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(183,196,177,.4); }
 .kad-search-clear{ position:absolute; right:10px; color:var(--muted); font-size:1.2rem; text-decoration:none; display:flex; }
 
 .kad-table-panel{ padding-bottom:12px; }
@@ -230,6 +201,16 @@
 }
 @media (max-width:540px){
     .kad-title{ font-size:1.4rem; }
+}
+
+/* ===== Mobile fixes ===== */
+@media (max-width:820px){
+    .kad-side{ overflow-y:auto; }
+    .kad-top{ align-items:flex-start; gap:12px; margin-bottom:20px; }
+    .kad-top > div:not([class]){ min-width:0; }
+    .kad-panel{ padding:18px 16px; border-radius:20px; }
+    /* 16px stops iOS zooming in when a field is tapped */
+    .kset-input input, .kset-input select, .kset-input textarea, .kad-search input{ font-size:16px; }
 }
 </style>
 

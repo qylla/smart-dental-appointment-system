@@ -116,6 +116,30 @@
                         </div>
                     </label>
 
+                     <label class="kset-field">
+                        <span>Date of birth</span>
+                        @if ($user->date_of_birth)
+                            <div class="kset-input kset-input-locked">
+                                <i class='bx bxs-cake'></i>
+                                <input type="text" value="{{ $user->date_of_birth->format('j F Y') }}" disabled>
+                                <i class='bx bxs-lock-alt'></i>
+                            </div>
+                            <small class="kset-field-hint">
+                                You are {{ $user->age }} years old. If this is wrong, please contact the clinic to correct it.
+                            </small>
+                        @else
+                            <div class="kset-input">
+                                <i class='bx bxs-cake'></i>
+                                <input type="date" name="date_of_birth"
+                                       value="{{ old('date_of_birth') }}"
+                                       max="{{ now()->subDay()->toDateString() }}">
+                            </div>
+                            <small class="kset-field-hint">
+                                Please check carefully. Once saved, it can't be changed here.
+                            </small>
+                        @endif
+                    </label>
+
                     <button type="submit" class="kset-btn kset-btn-dark">Save changes</button>
                 </form>
             </section>
@@ -275,9 +299,9 @@
 
 <style>
 :root{
-    --vanilla:#FFF8E2;
-    --buttercream:#FFEFB9;
-    --powder:#BCD1DE;
+    --vanilla:#FBF8F3;
+    --buttercream:#EFE6DA;
+    --powder:#B7C4B1;
     --walnut:#5E442E;
     --walnut-dark:#2f2318;
     --ink:#3a2c20;
@@ -287,7 +311,7 @@
 .kset-wrap{ max-width:820px; margin:0 auto; padding:0 20px; }
 .kset h1,.kset h2{ font-family:'Fraunces',serif; letter-spacing:-.02em; margin:0; color:var(--walnut); }
 
-.kset-top{ background:rgba(255,239,185,.92); backdrop-filter:blur(8px); border-bottom:1px solid rgba(94,68,46,.1); position:sticky; top:0; z-index:20; }
+.kset-top{ background:rgba(239,230,218,.92); backdrop-filter:blur(8px); border-bottom:1px solid rgba(94,68,46,.1); position:sticky; top:0; z-index:20; }
 .kset-top-inner{ display:flex; align-items:center; justify-content:space-between; height:66px; }
 .kset-back{ display:flex; align-items:center; gap:6px; text-decoration:none; color:var(--walnut); font-weight:700; font-size:.9rem; }
 .kset-top-title{ font-family:'Fraunces',serif; font-weight:600; color:var(--walnut); font-size:1.05rem; }
@@ -336,9 +360,12 @@
 .kset-field{ display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
 .kset-field > span{ font-size:.8rem; font-weight:800; color:var(--walnut); }
 .kset-input{ display:flex; align-items:center; gap:10px; border:1px solid rgba(94,68,46,.22); border-radius:14px; padding:12px 16px; background:#fff; transition:border-color .2s ease, box-shadow .2s ease; }
-.kset-input:focus-within{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(188,209,222,.4); }
+.kset-input:focus-within{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(183,196,177,.4); }
 .kset-input i{ color:var(--walnut); font-size:1.1rem; flex-shrink:0; }
 .kset-input input{ border:none; background:none; outline:none; width:100%; font-family:inherit; font-size:.92rem; color:var(--ink); }
+.kset-field-hint{ font-size:.78rem; color:var(--muted); }
+.kset-input-locked{ background:#f5efe3; }
+.kset-input-locked input{ color:var(--muted); cursor:not-allowed; }
 
 /* BUTTONS */
 .kset-btn{ display:inline-flex; align-items:center; justify-content:center; gap:7px; border-radius:999px; font-weight:700; font-size:.9rem; border:1px solid transparent; cursor:pointer; padding:12px 24px; font-family:inherit; text-decoration:none; transition:transform .22s ease, box-shadow .22s ease, background .22s ease; }
@@ -376,7 +403,7 @@
 .b-routine{ background:#eef3e9; color:#5a7a4a; }
 .b-urgent{ background:#fde3d0; color:#a8611f; }
 .b-critical{ background:#fbdada; color:#a13d3d; }
-.s-pending{ background:var(--buttercream); color:#8a6a2e; }
+.s-pending{ background:#FDF1DC; color:#8a6a2e; }
 .s-confirmed{ background:#dbe8ef; color:#3f6377; }
 .s-completed{ background:#e3ece0; color:#4a7c4a; }
 .s-cancelled,.s-no_show{ background:#efe6e0; color:#8a7060; }
@@ -396,6 +423,36 @@
     .kset-hero .kset-btn{ margin-left:0; width:100%; }
     .kset-card{ padding:22px 18px; }
     .kset-tabs button{ padding:9px 14px; font-size:.82rem; }
+}
+
+/* ===== Mobile fixes ===== */
+@media (max-width:640px){
+    .kset{ padding-bottom:100px; }
+    .kset-wrap{ padding:0 14px; }
+    .kset-top-inner{ height:58px; gap:10px; }
+    .kset-top-title{ font-size:.95rem; }
+    .kset-main{ padding-top:20px; }
+    .kset-hero{ padding:20px; border-radius:20px; }
+    .kset-hero > div{ min-width:0; width:100%; }
+    .kset-hero-sub{ overflow-wrap:anywhere; } /* long emails */
+    .kset-h1{ font-size:1.35rem; }
+    /* keep the 3 stats side by side instead of 3 tall rows */
+    .kset-summary{ grid-template-columns:repeat(3,1fr); gap:8px; }
+    .kset-sum{ flex-direction:column; align-items:center; text-align:center; gap:8px; padding:14px 6px; border-radius:16px; }
+    .kset-sum-ico{ width:36px; height:36px; font-size:1.1rem; border-radius:11px; }
+    .kset-sum-num{ font-size:1.3rem; }
+    .kset-sum-cap{ font-size:.72rem; line-height:1.3; }
+    .kset-tabs{ flex-wrap:nowrap; border-radius:16px; }
+    .kset-tabs button{ flex:1; padding:9px 6px; font-size:.78rem; line-height:1.25; border-radius:12px; }
+    .kset-card{ padding:20px 16px; }
+    .kset-input input{ font-size:16px; } /* stops iOS zooming in on focus */
+    .kset-card form > .kset-btn{ width:100%; }
+    .kset-appt{ gap:12px; }
+    .kset-appt-tags{ width:100%; padding-left:64px; }
+    .kset-danger-row .kset-btn, #showDelete{ width:100%; }
+}
+@media (max-width:360px){
+    .kset-top-title{ display:none; } /* the page heading already says it */
 }
 </style>
 

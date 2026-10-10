@@ -59,12 +59,13 @@
                         </div>
                     @endif
 
+                    {{-- Login may use the browser's saved password; that's a convenience for patients. --}}
                     <label class="kauth-field">
                         <span>Email</span>
                         <div class="kauth-input">
                             <i class='bx bxs-envelope'></i>
                             <input type="email" name="email" value="{{ old('email') }}"
-                                   placeholder="you@example.com" required>
+                                   placeholder="you@example.com" autocomplete="username" required>
                         </div>
                     </label>
 
@@ -72,13 +73,10 @@
                         <span>Password</span>
                         <div class="kauth-input">
                             <i class='bx bxs-lock-alt'></i>
-                            <input type="password" name="password" placeholder="Enter your password" required>
+                            <input type="password" name="password" placeholder="Enter your password"
+                                   autocomplete="current-password" required>
                         </div>
-                    </label>
-
-                    <label class="kauth-remember">
-                        <input type="checkbox" name="remember" value="1">
-                        <span>Keep me signed in</span>
+                        <a href="{{ route('password.request') }}" class="kauth-forgot">Forgot password?</a>
                     </label>
 
                     <button type="submit" class="kpz-btn kpz-btn-brown kauth-submit">Log In</button>
@@ -87,7 +85,9 @@
                 </form>
 
                 <!-- REGISTER FORM -->
-                <form action="{{ route('register') }}" method="POST" class="kauth-form kauth-form-register">
+                {{-- autocomplete="new-password" tells the browser this is a NEW account,
+                     so it doesn't fill in a saved login here. --}}
+                <form action="{{ route('register') }}" method="POST" class="kauth-form kauth-form-register" autocomplete="off">
                     @csrf
                     <span class="kauth-eyebrow">New Patient</span>
                     <h2>Create your account</h2>
@@ -105,7 +105,7 @@
                         <div class="kauth-input">
                             <i class='bx bxs-user'></i>
                             <input type="text" name="name" value="{{ old('name') }}"
-                                   placeholder="As per IC" required>
+                                   placeholder="As per IC" autocomplete="off" required>
                         </div>
                     </label>
 
@@ -114,7 +114,7 @@
                         <div class="kauth-input">
                             <i class='bx bxs-envelope'></i>
                             <input type="email" name="email" value="{{ old('email') }}"
-                                   placeholder="you@example.com" required>
+                                   placeholder="you@example.com" autocomplete="off" required>
                         </div>
                     </label>
 
@@ -123,7 +123,16 @@
                         <div class="kauth-input">
                             <i class='bx bxs-phone'></i>
                             <input type="text" name="phone" value="{{ old('phone') }}"
-                                   placeholder="01X-XXX XXXX" required>
+                                   placeholder="01X-XXX XXXX" autocomplete="off" required>
+                        </div>
+                    </label>
+
+                    <label class="kauth-field">
+                        <span>Date of Birth</span>
+                        <div class="kauth-input">
+                            <i class='bx bxs-calendar'></i>
+                            <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}"
+                                   max="{{ now()->subDay()->toDateString() }}" autocomplete="off" required>
                         </div>
                     </label>
 
@@ -131,7 +140,8 @@
                         <span>Password</span>
                         <div class="kauth-input">
                             <i class='bx bxs-lock-alt'></i>
-                            <input type="password" name="password" placeholder="At least 8 characters" required>
+                            <input type="password" name="password" placeholder="At least 8 characters"
+                                   autocomplete="new-password" required>
                         </div>
                     </label>
 
@@ -139,8 +149,8 @@
                         <span>Confirm Password</span>
                         <div class="kauth-input">
                             <i class='bx bxs-lock-alt'></i>
-                            <input type="password" name="password_confirmation"
-                                   placeholder="Type it again" required>
+                            <input type="password" name="password_confirmation" placeholder="Type it again"
+                                   autocomplete="new-password" required>
                         </div>
                     </label>
 
@@ -156,9 +166,9 @@
 
 <style>
 :root{
-    --vanilla:#FFF8E2;
-    --buttercream:#FFEFB9;
-    --powder:#BCD1DE;
+    --vanilla:#FBF8F3;
+    --buttercream:#EFE6DA;
+    --powder:#B7C4B1;
     --walnut:#5E442E;
     --walnut-dark:#3f2e1f;
     --ink:#3a2c20;
@@ -175,15 +185,15 @@
 /* LEFT SIDE (slides as a curtain) */
 .kauth-side{ position:absolute; top:0; left:0; width:42.5%; height:100%; background:var(--walnut); color:var(--vanilla); padding:48px 40px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; z-index:3; transition:left .7s cubic-bezier(.65,0,.35,1); }
 .kauth-card.show-register .kauth-side{ left:57.5%; }
-.kauth-blob{ position:absolute; bottom:-70px; right:-60px; width:220px; height:220px; background:rgba(255,239,185,.12); border-radius:62% 38% 55% 45% / 48% 45% 55% 52%; }
+.kauth-blob{ position:absolute; bottom:-70px; right:-60px; width:220px; height:220px; background:rgba(239,230,218,.12); border-radius:62% 38% 55% 45% / 48% 45% 55% 52%; }
 .kauth-logo{ position:relative; z-index:2; display:flex; align-items:center; width:54px; height:34px; margin-bottom:26px; }
 .kauth-logo i{ position:absolute; width:34px; height:34px; border-radius:50%; }
 .kauth-logo i:first-child{ left:0; background:var(--buttercream); }
 .kauth-logo i:last-child{ left:20px; background:var(--powder); opacity:.92; }.kauth-logo{ width:56px; height:56px; border-radius:50%; object-fit:cover; background:var(--vanilla); padding:6px; margin-bottom:26px; position:relative; z-index:2; }
 .kauth-side-inner{ position:relative; z-index:2; }
 .kauth-side h1{ font-family:'Fraunces',serif; font-size:2rem; font-weight:600; color:var(--vanilla); margin-bottom:14px; line-height:1.15; }
-.kauth-side p{ color:rgba(255,248,226,.75); font-size:.95rem; line-height:1.6; margin-bottom:30px; max-width:280px; }
-.kauth-punchline{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.88rem; color:rgba(255,248,226,.75); }
+.kauth-side p{ color:rgba(251,248,243,.75); font-size:.95rem; line-height:1.6; margin-bottom:30px; max-width:280px; }
+.kauth-punchline{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.88rem; color:rgba(251,248,243,.75); }
 .kauth-link-btn{ background:none; border:none; color:var(--buttercream); font-weight:700; text-decoration:underline; cursor:pointer; padding:0; font-size:inherit; font-family:inherit; }
 .kauth-link-btn:hover{ color:var(--powder); }
 
@@ -209,10 +219,27 @@
 .kauth-field{ display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
 .kauth-field span{ font-size:.8rem; font-weight:700; color:var(--walnut); }
 .kauth-input{ display:flex; align-items:center; gap:10px; border:1px solid rgba(94,68,46,.25); border-radius:12px; padding:12px 14px; background:var(--vanilla); transition:border-color .2s ease, box-shadow .2s ease; }
-.kauth-input:focus-within{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(188,209,222,.4); }
+.kauth-input:focus-within{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(183,196,177,.4); }
 .kauth-input i{ color:var(--walnut); font-size:1.1rem; flex-shrink:0; }
 .kauth-input input{ border:none; background:none; outline:none; width:100%; font-family:'Plus Jakarta Sans',sans-serif; font-size:.92rem; color:var(--ink); }
 .kauth-input input::placeholder{ color:#a3937f; }
+
+/* Keep Chrome's autofill from painting fields blue */
+.kauth-input input:-webkit-autofill,
+.kauth-input input:-webkit-autofill:hover,
+.kauth-input input:-webkit-autofill:focus{
+    -webkit-box-shadow:0 0 0 1000px var(--vanilla) inset;
+    -webkit-text-fill-color:var(--ink);
+    transition:background-color 9999s ease-in-out 0s;
+}
+
+/* Show / hide password toggle (added to every password field by the script below) */
+.kauth-eye{ background:none; border:none; padding:0 2px; cursor:pointer; color:var(--walnut); font-size:1.2rem; line-height:1; opacity:.6; flex-shrink:0; transition:opacity .2s ease; }
+.kauth-eye:hover,.kauth-eye:focus-visible{ opacity:1; }
+.kauth-eye:focus-visible{ outline:2px solid var(--powder); outline-offset:3px; border-radius:6px; }
+/* Hide Edge's own built-in reveal button so there aren't two eyes */
+.kauth-input input::-ms-reveal,
+.kauth-input input::-ms-clear{ display:none; }
 
 .kauth-forgot{ align-self:flex-end; font-size:.83rem; color:var(--walnut); text-decoration:none; margin:-8px 0 22px; font-weight:600; }
 .kauth-forgot:hover{ text-decoration:underline; }
@@ -250,6 +277,31 @@
     .kauth-switch-mobile{ display:block; }
     .kauth-punchline{ display:none; }
 }
+
+/* ===== Mobile fixes ===== */
+@media (max-width:820px){
+    /* The register height (660px) still applied on phones, so the form spilled out of the white card */
+    .kauth-card, .kauth-card.show-register{ height:auto; }
+    .kauth-form-panel{ overflow:visible; }
+}
+@media (max-width:600px){
+    .kauth{ padding:62px 12px 100px; }
+    .kauth-back{ top:20px; left:16px; }
+    .kauth-card{ border-radius:22px; }
+    /* shorter brown panel so the form is visible sooner */
+    .kauth-side{ padding:24px 22px; }
+    .kauth-logo{ margin-bottom:14px; }
+    .kauth-side h1{ font-size:1.45rem; margin-bottom:8px; }
+    .kauth-side p{ margin-bottom:0; font-size:.9rem; }
+    .kauth-blob{ width:150px; height:150px; bottom:-60px; right:-50px; }
+    .kauth-form-panel{ padding:26px 20px 28px; }
+    .kauth-form h2{ font-size:1.5rem; margin-bottom:20px; }
+    .kauth-field{ margin-bottom:14px; }
+    .kauth-input input{ font-size:16px; } /* stops iOS zooming in on focus */
+    .kauth-forgot{ margin:2px 0 18px; }
+    /* the switch link sits on white here, so it needs the dark colour */
+    .kauth-switch-mobile .kauth-link-btn{ color:var(--walnut); }
+}
 </style>
 
 <script>
@@ -271,8 +323,46 @@
 
     document.getElementById('toRegister').addEventListener('click', showRegister);
     document.getElementById('toLogin').addEventListener('click', showLogin);
-    document.querySelectorAll('[data-switch="register"]').forEach(function(b){ b.addEventListener('click', showRegister); });
-    document.querySelectorAll('[data-switch="login"]').forEach(function(b){ b.addEventListener('click', showLogin); });
+    /* On phones the card is stacked, so after switching jump back to the top of the card. */
+    function jumpToCard(){
+        if (window.matchMedia('(max-width:820px)').matches) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    document.querySelectorAll('[data-switch="register"]').forEach(function(b){ b.addEventListener('click', function(){ showRegister(); jumpToCard(); }); });
+    document.querySelectorAll('[data-switch="login"]').forEach(function(b){ b.addEventListener('click', function(){ showLogin(); jumpToCard(); }); });
+
+    /* Show / hide password: add an eye button to every password field. */
+    document.querySelectorAll('.kauth-input input[type="password"]').forEach(function(input){
+        var btn = document.createElement('button');
+        btn.type = 'button';                        // never submits the form
+        btn.className = 'kauth-eye bx bx-show';
+        btn.setAttribute('aria-label', 'Show password');
+
+        btn.addEventListener('click', function(e){
+            e.preventDefault();                     // the field sits inside a <label>
+            var showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            btn.classList.toggle('bx-show', showing);
+            btn.classList.toggle('bx-hide', !showing);
+            btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+            input.focus();
+        });
+
+        input.insertAdjacentElement('afterend', btn);
+    });
+
+    /* Before submitting, put every field back to type="password",
+       so the browser never offers to save it as plain text. */
+    document.querySelectorAll('.kauth-form').forEach(function(form){
+        form.addEventListener('submit', function(){
+            form.querySelectorAll('.kauth-eye').forEach(function(btn){
+                var input = btn.previousElementSibling;
+                if(input && input.type === 'text') input.type = 'password';
+            });
+        });
+    });
 
     // If registration failed validation, reopen the register side so the
     // person can see their errors instead of landing back on the login form.

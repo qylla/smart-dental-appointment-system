@@ -11,35 +11,7 @@
 <div class="kad">
 
     <!-- ===== SIDEBAR ===== -->
-    <aside class="kad-side" id="kadSide">
-        <a href="{{ route('home') }}" class="kad-logo">
-            <span class="kad-logo-dots"><i></i><i></i></span>
-            <span>KPZ Doctor</span>
-        </a>
-
-        <nav class="kad-menu">
-            <a href="{{ route('doctor.dashboard') }}" class="kad-menu-item active"><i class='bx bx-calendar'></i> My Schedule</a>
-            <a href="{{ route('doctor.dashboard', ['tab' => 'notes']) }}" class="kad-menu-item"><i class='bx bx-user-voice'></i> Consultations</a>
-            <a href="{{ route('doctor.dashboard', ['tab' => 'history']) }}" class="kad-menu-item"><i class='bx bx-folder-open'></i> Patient Records</a>
-            <a href="#" class="kad-menu-item kad-menu-item-disabled"><i class='bx bx-time-five'></i> My Availability</a>
-        </nav>
-
-        <div class="kad-side-foot">
-            <div class="kad-user">
-                <span class="kad-avatar">{{ collect(explode(' ', auth()->user()->name))->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('') }}</span>
-                <div>
-                    <strong>{{ auth()->user()->name }}</strong>
-                    <span>{{ auth()->user()->specialisation ?: 'Dental Surgeon' }}</span>
-                </div>
-            </div>
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="kad-logout"><i class='bx bx-log-out'></i> Log out</button>
-            </form>
-        </div>
-    </aside>
-
-    <div class="kad-overlay" id="kadOverlay"></div>
+     @include('doctor.partials.sidebar')
 
     <!-- ===== MAIN ===== -->
     <main class="kad-main">
@@ -244,9 +216,9 @@
 
 <style>
 :root{
-    --vanilla:#FFF8E2;
-    --buttercream:#FFEFB9;
-    --powder:#BCD1DE;
+    --vanilla:#FBF8F3;
+    --buttercream:#EFE6DA;
+    --powder:#B7C4B1;
     --walnut:#5E442E;
     --walnut-dark:#2f2318;
     --ink:#3a2c20;
@@ -264,18 +236,18 @@
 .kad-logo-dots i:first-child{ left:0; background:var(--buttercream); }
 .kad-logo-dots i:last-child{ left:12px; background:var(--powder); }
 .kad-menu{ display:flex; flex-direction:column; gap:4px; flex:1; }
-.kad-menu-item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; text-decoration:none; color:rgba(255,248,226,.6); font-weight:600; font-size:.92rem; transition:background .2s ease,color .2s ease; }
+.kad-menu-item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; text-decoration:none; color:rgba(251,248,243,.6); font-weight:600; font-size:.92rem; transition:background .2s ease,color .2s ease; }
 .kad-menu-item i{ font-size:1.2rem; }
-.kad-menu-item:hover{ background:rgba(255,248,226,.07); color:var(--vanilla); }
+.kad-menu-item:hover{ background:rgba(251,248,243,.07); color:var(--vanilla); }
 .kad-menu-item.active{ background:var(--walnut); color:var(--vanilla); }
 .kad-menu-item-disabled{ opacity:.4; cursor:not-allowed; pointer-events:none; }
-.kad-side-foot{ border-top:1px solid rgba(255,248,226,.12); padding-top:18px; }
+.kad-side-foot{ border-top:1px solid rgba(251,248,243,.12); padding-top:18px; }
 .kad-user{ display:flex; align-items:center; gap:12px; padding:0 6px 16px; }
 .kad-user strong{ display:block; font-size:.88rem; color:var(--vanilla); }
-.kad-user span{ font-size:.75rem; color:rgba(255,248,226,.5); }
+.kad-user span{ font-size:.75rem; color:rgba(251,248,243,.5); }
 .kad-avatar{ width:38px; height:38px; flex-shrink:0; border-radius:50%; background:var(--powder); color:var(--walnut); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.85rem; }
-.kad-logout{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; text-decoration:none; color:rgba(255,248,226,.6); font-size:.88rem; font-weight:600; width:100%; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left; }
-.kad-logout:hover{ background:rgba(255,248,226,.07); color:var(--vanilla); }
+.kad-logout{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; text-decoration:none; color:rgba(251,248,243,.6); font-size:.88rem; font-weight:600; width:100%; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left; }
+.kad-logout:hover{ background:rgba(251,248,243,.07); color:var(--vanilla); }
 .kad-overlay{ display:none; position:fixed; inset:0; background:rgba(47,35,24,.5); z-index:55; }
 .kad-overlay.show{ display:block; }
 
@@ -329,7 +301,7 @@
 .kdoc-item:hover{ border-color:var(--walnut); }
 .kdoc-item.active{ background:var(--walnut); border-color:var(--walnut); }
 .kdoc-item.active .kdoc-item-name,.kdoc-item.active .kdoc-item-time{ color:var(--vanilla); }
-.kdoc-item.active .kdoc-item-sym{ color:rgba(255,248,226,.7); }
+.kdoc-item.active .kdoc-item-sym{ color:rgba(251,248,243,.7); }
 .kdoc-item.done{ opacity:.5; }
 .kdoc-item-time{ font-size:.78rem; font-weight:800; color:var(--walnut); width:56px; flex-shrink:0; }
 .kdoc-item-body{ flex:1; min-width:0; }
@@ -388,7 +360,7 @@
 .kdoc-field{ display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
 .kdoc-field > span{ font-size:.8rem; font-weight:800; color:var(--walnut); }
 .kdoc-field input,.kdoc-field textarea,.kdoc-field select{ border:1px solid rgba(94,68,46,.22); border-radius:14px; padding:12px 16px; font-family:inherit; font-size:.92rem; color:var(--ink); background:#fff; resize:vertical; outline:none; }
-.kdoc-field input:focus,.kdoc-field textarea:focus,.kdoc-field select:focus{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(188,209,222,.4); }
+.kdoc-field input:focus,.kdoc-field textarea:focus,.kdoc-field select:focus{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(183,196,177,.4); }
 .kdoc-field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .kdoc-flash{ display:flex; align-items:center; gap:9px; background:#dff0d8; color:#3f6b3f; border-radius:14px; padding:13px 18px; font-size:.88rem; font-weight:600; margin-bottom:18px; }
 .kdoc-saved{ display:none; align-items:center; gap:7px; margin:16px 0 0; font-size:.88rem; font-weight:700; color:#4a7c4a; }
@@ -430,6 +402,33 @@
 @media (max-width:540px){
     .kdoc-facts,.kdoc-field-row{ grid-template-columns:1fr; }
     .kad-title{ font-size:1.4rem; }
+}
+
+/* ===== Mobile fixes ===== */
+@media (max-width:1050px){
+    /* minmax(0,1fr) stops long one-line text from making the column wider than the screen */
+    .kdoc-grid{ grid-template-columns:minmax(0,1fr); }
+    .kdoc-detail{ min-height:0; scroll-margin-top:12px; }
+}
+@media (max-width:820px){
+    .kad-side{ overflow-y:auto; }
+    .kad-main{ padding-bottom:60px; }
+    .kad-top{ gap:12px; }
+    .kad-top > div:not(.kad-top-right){ min-width:0; }
+    .kdoc-stats{ grid-template-columns:repeat(3,1fr); gap:8px; }
+    .kdoc-stat{ flex-direction:column; align-items:center; text-align:center; gap:8px; padding:14px 6px; border-radius:16px; }
+    .kad-stat-ico{ width:36px; height:36px; font-size:1.1rem; border-radius:11px; }
+    .kdoc-num{ font-size:1.35rem; }
+    .kdoc-cap{ font-size:.72rem; }
+    .kad-panel{ padding:18px 16px; border-radius:20px; }
+    .kdoc-detail-head{ flex-wrap:wrap; }
+    .kdoc-patient-head{ min-width:0; }
+    .kdoc-patient-head h2{ overflow-wrap:anywhere; }
+    .kdoc-tabs{ display:grid; grid-template-columns:repeat(3,1fr); border-radius:16px; }
+    .kdoc-tabs button{ padding:9px 6px; font-size:.78rem; line-height:1.25; border-radius:12px; }
+    .kdoc-field input, .kdoc-field textarea, .kdoc-field select{ font-size:16px; width:100%; min-width:0; }
+    .kdoc-cta-row .kx-btn{ flex:1 1 100%; }
+    .kdoc-empty{ padding:36px 12px; }
 }
 </style>
 
@@ -541,6 +540,11 @@
         document.getElementById('histEmpty').style.display = 'none';
         document.getElementById('histBody').style.display = 'block';
         renderHistory(p);
+
+        /* On small screens the detail panel sits below the queue, so bring it into view. */
+        if (window.matchMedia('(max-width:1050px)').matches) {
+            document.querySelector('.kdoc-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     /* ---------- HISTORY ---------- */

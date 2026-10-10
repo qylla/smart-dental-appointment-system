@@ -8,6 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+@php
+    // Shared by the About map, the footer contacts and the footer buttons.
+    $mapQuery = urlencode(config('clinic.maps_query', 'Klinik Pergigian Dr Zuraida Pasir Mas'));
+    $bookUrl  = auth()->check()
+        ? \App\Http\Controllers\AuthController::homeFor(auth()->user())
+        : route('login');
+@endphp
+
 <div class="kx">
 <div class="kx-shell">
 
@@ -139,8 +147,7 @@
                 <a href="{{ route('symptom-checker') }}" class="kx-btn kx-btn-dark kx-btn-lg">
                     {{ __('site.hero.cta_symptom') }} <i class='bx bx-right-arrow-alt'></i>
                 </a>
-                <a href="@auth{{ \App\Http\Controllers\AuthController::homeFor(auth()->user()) }}@else{{ route('login') }}@endauth"
-                   class="kx-btn kx-btn-light kx-btn-lg">
+                <a href="{{ $bookUrl }}" class="kx-btn kx-btn-light kx-btn-lg">
                     {{ __('site.hero.cta_book') }}
                 </a>
             </div>
@@ -155,14 +162,27 @@
             </div>
         </div>
 
-        <!-- corner chip -->
-        <div class="kx-chip" data-rise style="transition-delay:.7s">
+               <!-- corner chip: the real next open slot, from SlotService -->
+        <a href="{{ $bookUrl }}" class="kx-chip" data-rise style="transition-delay:.7s">
             <span class="kx-chip-icon"><i class='bx bx-time-five'></i></span>
             <div>
                 <p class="kx-chip-title">{{ __('site.hero.chip_title') }}</p>
-                <p class="kx-chip-sub">{{ __('site.hero.chip_sub') }}</p>
+                <p class="kx-chip-sub">
+                    @if ($nextSlot ?? null)
+                        @php $slotDate = $nextSlot['date']; @endphp
+                        @if ($slotDate->isToday())
+                            {{ __('site.hero.chip_today', ['time' => $nextSlot['label']]) }}
+                        @elseif ($slotDate->isTomorrow())
+                            {{ __('site.hero.chip_tomorrow', ['time' => $nextSlot['label']]) }}
+                        @else
+                            {{ __('site.hero.chip_date', ['date' => $slotDate->translatedFormat('D, j M'), 'time' => $nextSlot['label']]) }}
+                        @endif
+                    @else
+                        {{ __('site.hero.chip_none') }}
+                    @endif
+                </p>
             </div>
-        </div>
+        </a>
     </section>
 
     <!-- ================= TREATMENTS ================= -->
@@ -210,7 +230,7 @@
             </div>
 
             <div class="kx-card" data-reveal style="transition-delay:.28s">
-                <span class="kx-card-ico"><i class='bx bx-bell'></i></span>
+                <span class="kx-card-ico"><i class='bx bx-envelope'></i></span>
                 <h3>{{ __('site.features.remind_title') }}</h3>
                 <p>{{ __('site.features.remind_desc') }}</p>
             </div>
@@ -286,6 +306,59 @@
                 </div>
             </div>
         </div>
+
+        <!-- Clinic location: a plain Google Maps embed, no API key needed -->
+                <!-- Inside the clinic: real photos, so patients know what to expect -->
+        @php
+            $gallery = [
+                ['file' => 'kpz-1.jpg', 'label' => 'gallery_reception'],
+                ['file' => 'kpz-8.jpg', 'label' => 'gallery_lounge'],
+                ['file' => 'kpz-5.jpg', 'label' => 'gallery_kids'],
+                ['file' => 'kpz-7.jpg', 'label' => 'gallery_room'],
+            ];
+        @endphp
+
+        <div class="kx-gallery-wrap" data-reveal>
+            <h3 class="kx-map-title">{{ __('site.about.gallery_title') }}</h3>
+            <div class="kx-gallery">
+                @foreach ($gallery as $photo)
+                    <a href="{{ asset('images/' . $photo['file']) }}" target="_blank" rel="noopener" class="kx-gallery-item">
+                        <img src="{{ asset('images/' . $photo['file']) }}"
+                             alt="{{ __('site.about.' . $photo['label']) }}" loading="lazy">
+                        <span>{{ __('site.about.' . $photo['label']) }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+
+        <!-- Clinic location: Google Maps embed (no API key) + the shopfront to look for -->
+        <div class="kx-map" data-reveal>
+            <h3 class="kx-map-title">{{ __('site.about.map_title') }}</h3>
+
+            <div class="kx-map-grid">
+                <div class="kx-map-frame">
+                    <iframe
+                        src="https://www.google.com/maps?q={{ $mapQuery }}&output=embed"
+                        title="{{ __('site.about.map_title') }}"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                        allowfullscreen></iframe>
+                </div>
+
+                <figure class="kx-shopfront">
+                    <img src="{{ asset('images/kpz-4.jpg') }}"
+                         alt="{{ __('site.about.shopfront') }}" loading="lazy">
+                    <figcaption><i class='bx bx-store-alt'></i> {{ __('site.about.shopfront') }}</figcaption>
+                </figure>
+            </div>
+
+            <div class="kx-map-actions">
+                <a href="https://www.google.com/maps/dir/?api=1&destination={{ $mapQuery }}"
+                   target="_blank" rel="noopener" class="kx-map-btn">
+                    <i class='bx bxs-map'></i> {{ __('site.about.directions') }}
+                </a>
+            </div>
+        </div>
     </section>
 
     <!-- ================= FAQS ================= -->
@@ -324,14 +397,22 @@
             <h2 class="kx-h2 kx-foot-h">{{ __('site.footer.title_1') }}<br>{{ __('site.footer.title_2') }}</h2>
             <p class="kx-foot-sub">{{ __('site.footer.sub') }}</p>
 
-            <form class="kx-foot-form" onsubmit="event.preventDefault()">
-                <input type="email" placeholder="{{ __('site.footer.placeholder') }}" required>
-                <button type="submit" class="kx-btn kx-btn-dark">{{ __('site.footer.cta') }} <i class='bx bx-right-arrow-alt'></i></button>
-            </form>
+            {{-- Real actions instead of a form that went nowhere --}}
+            <div class="kx-foot-actions">
+                <a href="https://wa.me/{{ config('clinic.whatsapp') }}" target="_blank" rel="noopener"
+                   class="kx-btn kx-btn-dark kx-btn-lg">
+                    <i class='bx bxl-whatsapp'></i> {{ __('site.footer.cta') }}
+                </a>
+                <a href="{{ $bookUrl }}" class="kx-btn kx-btn-light kx-btn-lg">
+                    {{ __('site.footer.book') }}
+                </a>
+            </div>
 
             <div class="kx-foot-contacts">
-                <span><i class='bx bx-phone'></i> 014-915 3244</span>
-                <span><i class='bx bx-map'></i> Klinik Pergigian Dr. Zuraida</span>
+                <a href="tel:+60149153244"><i class='bx bx-phone'></i> 014-915 3244</a>
+                <a href="https://www.google.com/maps/search/?api=1&query={{ $mapQuery }}" target="_blank" rel="noopener">
+                    <i class='bx bx-map'></i> Klinik Pergigian Dr. Zuraida, Pasir Mas
+                </a>
                 <span><i class='bx bx-time-five'></i> {{ __('site.footer.hours') }}</span>
             </div>
         </div>
@@ -354,11 +435,16 @@
 </div>
 </div>
 
+<!-- BACK TO TOP (appears once the hero is scrolled past) -->
+<button type="button" class="kx-top" id="kxTop" aria-label="{{ __('site.footer.to_top') }}" title="{{ __('site.footer.to_top') }}">
+    <i class='bx bx-up-arrow-alt'></i>
+</button>
+
 <style>
 :root{
-    --vanilla:#FFF8E2;
-    --buttercream:#FFEFB9;
-    --powder:#BCD1DE;
+    --vanilla:#FBF8F3;
+    --buttercream:#EFE6DA;
+    --powder:#B7C4B1;
     --walnut:#5E442E;
     --walnut-dark:#2f2318;
     --ink:#3a2c20;
@@ -379,14 +465,14 @@
 .kx-btn-lg{ padding:14px 28px; font-size:1rem; }
 .kx-btn-dark{ background:var(--walnut); color:var(--vanilla); box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 12px 24px -12px rgba(94,68,46,.8); }
 .kx-btn-dark:hover{ background:var(--walnut-dark); color:var(--vanilla); box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 18px 30px -12px rgba(94,68,46,.9); }
-.kx-btn-light{ background:rgba(255,255,255,.92); color:var(--walnut); border-color:rgba(94,68,46,.14); box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 10px 22px -14px rgba(94,68,46,.5); }
+.kx-btn-light{ background:rgba(255, 255, 255, 0.92); color:var(--walnut); border-color:rgba(94,68,46,.14); box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 10px 22px -14px rgba(94,68,46,.5); }
 .kx-btn-light:hover{ background:#fff; color:var(--walnut); }
 
 /* ---------- HERO CARD ---------- */
 .kx-hero{ position:relative; overflow:hidden; border-radius:40px; background:var(--vanilla); min-height:100svh; display:flex; flex-direction:column; box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 20px 60px -30px rgba(94,68,46,.4); }
-.kx-bloom{ position:absolute; right:-160px; top:-40px; width:720px; height:720px; border-radius:50%; filter:blur(60px); opacity:.75; transition:transform .7s ease-out; background:radial-gradient(circle at 55% 45%, rgba(188,209,222,.85), rgba(188,209,222,.35) 42%, rgba(255,248,226,0) 70%); }
-.kx-bloom-2{ position:absolute; left:-200px; top:120px; width:620px; height:620px; border-radius:50%; filter:blur(60px); opacity:.65; background:radial-gradient(circle, rgba(255,239,185,.9), rgba(255,239,185,.3) 48%, rgba(255,248,226,0) 72%); }
-.kx-bloom-3{ position:absolute; right:22%; bottom:-180px; width:560px; height:420px; border-radius:50%; filter:blur(60px); opacity:.5; background:radial-gradient(circle, rgba(94,68,46,.18), rgba(255,248,226,0) 70%); }
+.kx-bloom{ position:absolute; right:-160px; top:-40px; width:720px; height:720px; border-radius:50%; filter:blur(60px); opacity:.75; transition:transform .7s ease-out; background:radial-gradient(circle at 55% 45%, rgba(183,196,177,.85), rgba(183,196,177,.35) 42%, rgba(251,248,243,0) 70%); }
+.kx-bloom-2{ position:absolute; left:-200px; top:120px; width:620px; height:620px; border-radius:50%; filter:blur(60px); opacity:.65; background:radial-gradient(circle, rgba(239,230,218,.9), rgba(239,230,218,.3) 48%, rgba(251,248,243,0) 72%); }
+.kx-bloom-3{ position:absolute; right:22%; bottom:-180px; width:560px; height:420px; border-radius:50%; filter:blur(60px); opacity:.5; background:radial-gradient(circle, rgba(94,68,46,.18), rgba(251,248,243,0) 70%); }
 
 /* ---------- FLOATING PILL NAV ---------- */
 .kx-nav-hold{ position:sticky; top:14px; z-index:50; display:flex; justify-content:center; padding:18px 14px 0; }
@@ -452,7 +538,7 @@
 .kx-tile span{ width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.25rem; }
 .kx-tile-1{ right:-30px; top:-44px; transform:rotate(6deg); }
 .kx-tile-2{ right:-104px; top:66px; transform:rotate(-6deg); }
-.kx-tile-3{ right:24px; bottom:-56px; transform:rotate(3deg); }
+.kx-tile-3{ right:-100px; bottom:-56px; transform:rotate(3deg); }
 @media (min-width:900px){ .kx-tile{ display:flex; } }
 
 .kx-lead{ margin:36px auto 0; max-width:540px; font-size:1.1rem; line-height:1.65; color:#5c4d3f; }
@@ -467,6 +553,8 @@
 .kx-chip-icon{ width:52px; height:40px; border-radius:12px; background:linear-gradient(135deg, var(--walnut), #7a5c3e); color:var(--vanilla); display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
 .kx-chip-title{ margin:0; font-size:.88rem; font-weight:700; color:var(--walnut); }
 .kx-chip-sub{ margin:0; font-size:.78rem; color:var(--muted); }
+.kx-chip{ text-decoration:none; transition:transform .25s ease, box-shadow .25s ease; }
+.kx-chip:hover{ transform:translateY(-3px); box-shadow:0 20px 36px -14px rgba(94,68,46,.6); }
 
 /* ---------- SECTIONS ---------- */
 .kx-section{ padding:96px 24px; max-width:1180px; margin:0 auto; }
@@ -484,7 +572,7 @@
 .kx-card:hover{ transform:translateY(-5px); box-shadow:0 24px 44px -18px rgba(94,68,46,.45); }
 .kx-card-wide{ grid-column:span 2; }
 .kx-card-ico{ display:flex; width:48px; height:48px; border-radius:16px; background:var(--buttercream); border:1px solid rgba(94,68,46,.08); color:var(--walnut); align-items:center; justify-content:center; font-size:1.35rem; }
-.kx-ico-light{ background:rgba(255,248,226,.14); border-color:rgba(255,248,226,.15); color:var(--buttercream); }
+.kx-ico-light{ background:rgba(251,248,243,.14); border-color:rgba(251,248,243,.15); color:var(--buttercream); }
 .kx-card h3{ margin-top:20px; font-size:1.3rem; font-weight:600; }
 .kx-card p{ margin:10px 0 0; font-size:1rem; line-height:1.6; color:#5c4d3f; }
 .kx-mini-slots{ display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; }
@@ -492,12 +580,12 @@
 .kx-mini-slots .on{ background:#fff; border:1px solid rgba(94,68,46,.15); color:var(--walnut); }
 .kx-mini-slots .off{ background:rgba(94,68,46,.07); color:#a3937f; text-decoration:line-through; }
 
-.kx-card-dark{ grid-row:span 2; background:var(--walnut); border-color:rgba(255,248,226,.08); display:flex; flex-direction:column; }
+.kx-card-dark{ grid-row:span 2; background:var(--walnut); border-color:rgba(251,248,243,.08); display:flex; flex-direction:column; }
 .kx-card-dark h3{ color:var(--vanilla); }
-.kx-card-dark p{ color:rgba(255,248,226,.68); }
+.kx-card-dark p{ color:rgba(251,248,243,.68); }
 .kx-urgency{ display:flex; flex-direction:column; gap:10px; margin-top:26px; }
 .kx-urgency span{ padding:11px 18px; border-radius:14px; font-size:.86rem; font-weight:700; }
-.u-routine{ background:rgba(255,239,185,.16); color:var(--buttercream); }
+.u-routine{ background:rgba(239,230,218,.16); color:var(--buttercream); }
 .u-urgent{ background:rgba(214,140,74,.24); color:#f0c08a; }
 .u-critical{ background:rgba(200,90,90,.24); color:#f0a6a6; }
 .kx-card-link{ margin-top:auto; padding-top:26px; display:inline-flex; align-items:center; gap:6px; color:var(--buttercream); font-weight:700; font-size:.92rem; text-decoration:none; }
@@ -518,23 +606,70 @@
 /* ---------- DARK BENTO ---------- */
 .kx-dark-wrap{ border-radius:38px; background:var(--walnut-dark); padding:18px; box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 30px 60px -30px rgba(47,35,24,.9); }
 .kx-dark-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-.kx-dcard{ background:#3b2d20; border:1px solid rgba(255,248,226,.06); border-radius:28px; padding:32px; }
+.kx-dcard{ background:#3b2d20; border:1px solid rgba(251,248,243,.06); border-radius:28px; padding:32px; }
 .kx-dcard-wide{ grid-column:span 2; }
 .kx-dcard h3{ color:var(--vanilla); font-size:1.5rem; font-weight:600; }
-.kx-dcard h3 span{ color:rgba(255,248,226,.45); }
-.kx-dcard p{ margin:12px 0 0; color:rgba(255,248,226,.6); font-size:1rem; line-height:1.6; max-width:420px; }
+.kx-dcard h3 span{ color:rgba(251,248,243,.45); }
+.kx-dcard p{ margin:12px 0 0; color:rgba(251,248,243,.6); font-size:1rem; line-height:1.6; max-width:420px; }
 .kx-dcard-note{ margin-top:24px !important; text-align:center; font-size:.88rem; }
 .kx-dtag{ display:inline-block; background:var(--powder); color:var(--walnut); font-size:.75rem; font-weight:800; padding:6px 14px; border-radius:999px; }
 .kx-bars{ display:flex; align-items:flex-end; justify-content:center; gap:10px; margin-top:26px; }
-.kx-bars span{ width:18px; border-radius:999px; background:rgba(255,248,226,.14); }
+.kx-bars span{ width:18px; border-radius:999px; background:rgba(251,248,243,.14); }
 .kx-bars span.hot{ background:linear-gradient(to bottom, var(--buttercream), var(--powder)); }
 .kx-flow{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:34px; flex-wrap:wrap; }
-.kx-flow-step{ display:flex; flex-direction:column; align-items:center; gap:8px; width:74px; padding:16px 6px; border-radius:18px; background:#463526; border:1px solid rgba(255,248,226,.05); color:rgba(255,248,226,.5); font-size:.72rem; font-weight:600; }
+.kx-flow-step{ display:flex; flex-direction:column; align-items:center; gap:8px; width:74px; padding:16px 6px; border-radius:18px; background:#463526; border:1px solid rgba(251,248,243,.05); color:rgba(251,248,243,.5); font-size:.72rem; font-weight:600; }
 .kx-flow-step i{ font-size:1.3rem; }
-.kx-flow-active{ background:linear-gradient(to bottom,#5c4630,#3f2f21); border-color:rgba(255,248,226,.16); color:var(--buttercream); }
-.kx-flow-arrow{ width:32px; height:32px; border-radius:50%; border:1px solid rgba(255,239,185,.4); background:var(--walnut-dark); color:var(--buttercream); display:flex; align-items:center; justify-content:center; }
+.kx-flow-active{ background:linear-gradient(to bottom,#5c4630,#3f2f21); border-color:rgba(251,248,243,.16); color:var(--buttercream); }
+.kx-flow-arrow{ width:32px; height:32px; border-radius:50%; border:1px solid rgba(239,230,218,.4); background:var(--walnut-dark); color:var(--buttercream); display:flex; align-items:center; justify-content:center; }
 .kx-quote-row{ display:flex; gap:20px; align-items:flex-start; }
 .kx-quote-mark{ flex-shrink:0; width:48px; height:48px; border-radius:16px; background:var(--buttercream); color:var(--walnut); display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+
+/* ---------- CLINIC LOCATION MAP ---------- */
+.kx-map{ margin-top:32px; }
+.kx .kx-map-title{ font-size:1.5rem; font-weight:600; margin:0 0 14px; }
+.kx-map-frame{ position:relative; border-radius:28px; overflow:hidden; border:1px solid rgba(94,68,46,.12); aspect-ratio:16/7; background:var(--buttercream); box-shadow:0 14px 30px -18px rgba(94,68,46,.4); }
+.kx-map-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+.kx-map-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.kx-map-btn{ display:inline-flex; align-items:center; gap:7px; padding:10px 18px; border-radius:999px; border:1.5px solid var(--walnut); color:var(--walnut); font-weight:700; font-size:.88rem; text-decoration:none; transition:background .2s ease, color .2s ease; }
+.kx-map-btn:hover{ background:var(--walnut); color:var(--vanilla); }
+.kx-map-btn i{ font-size:1.1rem; }
+/* ---------- CLINIC PHOTOS ---------- */
+.kx-gallery-wrap{ margin-top:32px; }
+.kx-gallery{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.kx-gallery-item{ position:relative; display:block; aspect-ratio:3/4; border-radius:22px; overflow:hidden; background:var(--buttercream); box-shadow:0 14px 30px -18px rgba(94,68,46,.45); }
+.kx-gallery-item img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; }
+.kx-gallery-item:hover img{ transform:scale(1.05); }
+.kx-gallery-item span{ position:absolute; left:12px; bottom:12px; padding:6px 12px; border-radius:999px; background:rgba(251,248,243,.92); backdrop-filter:blur(6px); color:var(--walnut); font-size:.8rem; font-weight:700; }
+
+/* Map and shopfront side by side */
+.kx-map-grid{ display:grid; grid-template-columns:3fr 2fr; gap:14px; }
+.kx-map-grid .kx-map-frame{ aspect-ratio:auto; min-height:320px; }
+.kx-shopfront{ position:relative; margin:0; aspect-ratio:4/3; border-radius:28px; overflow:hidden; border:1px solid rgba(94,68,46,.12); background:var(--buttercream); box-shadow:0 14px 30px -18px rgba(94,68,46,.4); }
+.kx-shopfront img{ width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
+.kx-shopfront figcaption{ position:absolute; left:12px; right:12px; bottom:12px; display:flex; align-items:center; gap:7px; padding:9px 14px; border-radius:14px; background:rgba(251,248,243,.94); color:var(--walnut); font-size:.84rem; font-weight:700; }
+.kx-shopfront figcaption i{ font-size:1.1rem; }
+
+@media (max-width:820px){
+    /* On phones the gallery becomes a swipeable row instead of a 2x2 grid.
+       Showing part of the next photo tells people they can swipe. */
+    .kx-gallery{
+        grid-template-columns:none;
+        grid-auto-flow:column;
+        grid-auto-columns:72%;
+        overflow-x:auto;
+        scroll-snap-type:x mandatory;
+        scroll-padding-left:2px;
+        padding-bottom:10px;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+    }
+    .kx-gallery::-webkit-scrollbar{ display:none; }
+    .kx-gallery-item{ scroll-snap-align:start; }
+
+    .kx-map-grid{ grid-template-columns:1fr; }
+    .kx-map-grid .kx-map-frame{ min-height:0; aspect-ratio:16/10; }
+}
+
 
 /* ---------- FAQS ---------- */
 .kx-faqs{ display:flex; flex-direction:column; gap:12px; max-width:820px; }
@@ -548,17 +683,16 @@
 
 /* ---------- FOOTER ---------- */
 .kx-footer{ position:relative; overflow:hidden; border-radius:40px; background:var(--vanilla); padding:96px 32px 40px; box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 20px 60px -30px rgba(94,68,46,.4); }
-.kx-foot-bloom-1{ position:absolute; left:-160px; bottom:-80px; width:520px; height:520px; border-radius:50%; filter:blur(60px); opacity:.6; background:radial-gradient(circle, rgba(188,209,222,.8), transparent 70%); }
-.kx-foot-bloom-2{ position:absolute; right:-160px; top:-90px; width:440px; height:440px; border-radius:50%; filter:blur(60px); opacity:.55; background:radial-gradient(circle, rgba(255,239,185,.9), transparent 70%); }
+.kx-foot-bloom-1{ position:absolute; left:-160px; bottom:-80px; width:520px; height:520px; border-radius:50%; filter:blur(60px); opacity:.6; background:radial-gradient(circle, rgba(183,196,177,.8), transparent 70%); }
+.kx-foot-bloom-2{ position:absolute; right:-160px; top:-90px; width:440px; height:440px; border-radius:50%; filter:blur(60px); opacity:.55; background:radial-gradient(circle, rgba(239,230,218,.9), transparent 70%); }
 .kx-foot-body{ position:relative; max-width:720px; margin:0 auto; text-align:center; }
 .kx-foot-h{ font-size:clamp(2rem,4.5vw,3.4rem); }
 .kx-foot-sub{ margin:22px auto 0; max-width:520px; font-size:1.05rem; line-height:1.7; color:#5c4d3f; }
-.kx-foot-form{ display:flex; flex-direction:column; gap:12px; max-width:520px; margin:36px auto 0; }
-@media (min-width:640px){ .kx-foot-form{ flex-direction:row; } }
-.kx-foot-form input{ flex:1; border-radius:999px; border:1px solid rgba(94,68,46,.14); background:#fff; padding:14px 24px; font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; color:var(--ink); outline:none; box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 8px 20px -14px rgba(94,68,46,.4); }
-.kx-foot-form input:focus{ border-color:var(--powder); box-shadow:0 0 0 3px rgba(188,209,222,.4); }
+.kx-foot-actions{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:36px auto 0; }
+.kx-foot-actions .bxl-whatsapp{ font-size:1.25rem; }
 .kx-foot-contacts{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px 28px; margin-top:32px; font-size:.92rem; color:#5c4d3f; }
-.kx-foot-contacts span{ display:inline-flex; align-items:center; gap:7px; }
+.kx-foot-contacts a,.kx-foot-contacts span{ display:inline-flex; align-items:center; gap:7px; color:#5c4d3f; text-decoration:none; }
+.kx-foot-contacts a:hover{ color:var(--walnut); text-decoration:underline; }
 .kx-foot-contacts i{ color:var(--walnut); }
 .kx-foot-bottom{ position:relative; max-width:1080px; margin:70px auto 0; padding-top:30px; border-top:1px solid rgba(94,68,46,.1); display:flex; flex-direction:column; align-items:center; gap:20px; text-align:center; }
 @media (min-width:768px){ .kx-foot-bottom{ flex-direction:row; justify-content:space-between; text-align:left; } }
@@ -580,6 +714,7 @@
     .kx-burger{ display:flex; }
     .kx-nav-cta{ display:none; }
     .kx-lang{ display:none; }
+    .kx-map-frame{ aspect-ratio:16/10; }
 }
 @media (max-width:680px){
     .kx-shell{ padding:6px; }
@@ -590,6 +725,27 @@
     .kx-pill-c{ transform:none; }
     .kx-pill-l,.kx-pill-r{ transform:none; }
     .kx-quote-row{ flex-direction:column; }
+    .kx-map-frame{ aspect-ratio:4/3; border-radius:22px; }
+}
+
+/* ===== Mobile fixes ===== */
+/* Keeps each word of a heading together (see splitChars below) so it never breaks mid-word */
+.wword{ display:inline-block; white-space:nowrap; }
+@media (max-width:1023px){
+    /* show the real "next available slot" chip on phones and tablets too, under the buttons */
+    .kx-chip{ display:flex; position:relative; right:auto; bottom:auto; align-self:center; margin:0 16px 28px; }
+}
+@media (max-width:575.98px){
+    .kx-shell{ padding-bottom:84px; } /* room for the floating WhatsApp button */
+}
+/* ===== Back to top ===== */
+/* Sits just above the WhatsApp button, lined up with its centre */
+.kx-top{ position:fixed; right:28px; bottom:96px; z-index:1039; width:44px; height:44px; border-radius:50%; border:1px solid rgba(94,68,46,.15); background:var(--vanilla); color:var(--walnut); font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 12px 24px -12px rgba(94,68,46,.6); opacity:0; visibility:hidden; transform:translateY(10px); transition:opacity .25s ease, transform .25s ease, visibility .25s, background .2s ease, color .2s ease; }
+.kx-top.show{ opacity:1; visibility:visible; transform:none; }
+.kx-top:hover{ background:var(--walnut); color:var(--vanilla); }
+.kx-top:focus-visible{ outline:3px solid var(--powder); outline-offset:2px; }
+@media (max-width:575.98px){
+    .kx-top{ right:20px; bottom:82px; }
 }
 </style>
 
@@ -672,37 +828,140 @@
         bloom.style.transform = 'translate(' + x + 'px,' + y + 'px)';
     }, { passive:true });
 
-    /* variable-weight hover on headings */
+    /* back to top: show after the hero, scroll smoothly unless the user prefers less motion */
+    (function(){
+        var btn = document.getElementById('kxTop');
+        if (!btn) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        function toggle(){ btn.classList.toggle('show', window.scrollY > window.innerHeight * 0.8); }
+        window.addEventListener('scroll', toggle, { passive:true });
+        toggle();
+        btn.addEventListener('click', function(){
+            window.scrollTo({ top:0, behavior: reduce ? 'auto' : 'smooth' });
+        });
+    })();
+    
+    /* variable-weight hover on headings.
+       Only on devices with a mouse: phones have no hover, and the loop below
+       would just keep running and drain the battery. */
+    var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
     function splitChars(el){
         var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
         var nodes = []; while(walker.nextNode()) nodes.push(walker.currentNode);
         nodes.forEach(function(node){
             if(!node.textContent.trim()) return;
             var frag = document.createDocumentFragment();
-            node.textContent.split('').forEach(function(ch){
-                if(ch === ' '){ frag.appendChild(document.createTextNode(' ')); return; }
-                var s = document.createElement('span'); s.className = 'wchar'; s.textContent = ch;
-                frag.appendChild(s);
+            /* Wrap each word first, so a line can only break between words, never inside one. */
+            node.textContent.split(/(\s+)/).forEach(function(part){
+                if(!part) return;
+                if(/^\s+$/.test(part)){ frag.appendChild(document.createTextNode(part)); return; }
+                var word = document.createElement('span'); word.className = 'wword';
+                part.split('').forEach(function(ch){
+                    var s = document.createElement('span'); s.className = 'wchar'; s.textContent = ch;
+                    word.appendChild(s);
+                });
+                frag.appendChild(word);
             });
             node.parentNode.replaceChild(frag, node);
         });
     }
-    document.querySelectorAll('.kx-h1, .kx-h2').forEach(splitChars);
 
-    var chars = Array.prototype.slice.call(document.querySelectorAll('.wchar'));
-    var mx = -9999, my = -9999;
-    window.addEventListener('pointermove', function(e){ mx = e.clientX; my = e.clientY; }, { passive:true });
-    (function tick(){
-        for(var i=0;i<chars.length;i++){
-            var s = chars[i], r = s.getBoundingClientRect();
-            if(r.bottom < -80 || r.top > innerHeight + 80) continue;
-            var d = Math.hypot(mx - (r.left + r.width/2), my - (r.top + r.height/2));
-            var w = d < 200 ? 600 + (1 - d/200) * 300 : 600;
-            s.style.fontVariationSettings = "'wght' " + Math.round(w);
-        }
-        requestAnimationFrame(tick);
-    })();
+    if (canHover) {
+        document.querySelectorAll('.kx-h1, .kx-h2').forEach(splitChars);
+
+        var chars = Array.prototype.slice.call(document.querySelectorAll('.wchar'));
+        var mx = -9999, my = -9999;
+        window.addEventListener('pointermove', function(e){ mx = e.clientX; my = e.clientY; }, { passive:true });
+        (function tick(){
+            for(var i=0;i<chars.length;i++){
+                var s = chars[i], r = s.getBoundingClientRect();
+                if(r.bottom < -80 || r.top > innerHeight + 80) continue;
+                var d = Math.hypot(mx - (r.left + r.width/2), my - (r.top + r.height/2));
+                var w = d < 200 ? 600 + (1 - d/200) * 300 : 600;
+                s.style.fontVariationSettings = "'wght' " + Math.round(w);
+            }
+            requestAnimationFrame(tick);
+        })();
+    }
 })();
+
+// ==UserScript==
+// @name         Premium Scroll to Top Button (Above WhatsApp)
+// @namespace    http://tampermonkey.net
+// @version      1.2
+// @description  A modern, clean scroll-to-top button placed perfectly above the floating WhatsApp widget
+// @match        *://*/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // 1. Create the button element
+    const topBtn = document.createElement('button');
+    
+    // Modern minimal SVG arrow icon instead of standard emoji
+    topBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+
+    // 2. Button Styling (Matches your website's elegant, clean aesthetic)
+    Object.assign(topBtn.style, {
+        position: 'fixed',
+        bottom: '95px',        // Shifted up to sit neatly right above the WhatsApp button
+        right: '20px',         // Aligned with the screen edge margin
+        zIndex: '99999',       // Ensures it stays on top of all other elements
+        width: '45px',
+        height: '45px',
+        cursor: 'pointer',
+        
+        // Colors matched to your site's dark tone (like the "Check my symptoms" button)
+        backgroundColor: '#4A3E3D', 
+        color: '#FFFFFF',
+        border: 'none',
+        borderRadius: '50%',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        
+        // Center the arrow icon inside the circle
+        display: 'none',       // Hidden by default at the top of the page
+        alignItems: 'center',
+        justifyContent: 'center',
+        
+        // Smooth transition effect
+        transition: 'all 0.3s ease-in-out'
+    });
+
+    // Elegant Hover Effects
+    topBtn.onmouseover = () => {
+        topBtn.style.backgroundColor = '#605251'; // Becomes slightly lighter on hover
+        topBtn.style.transform = 'translateY(-3px)'; // Micro-interaction lifts it up slightly
+    };
+    topBtn.onmouseout = () => {
+        topBtn.style.backgroundColor = '#4A3E3D';
+        topBtn.style.transform = 'translateY(0)';
+    };
+
+    // 3. Show button only when user scrolls down 300px
+    window.addEventListener('scroll', () => {
+        if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+            topBtn.style.display = 'flex'; // Uses flex to maintain centered icon alignment
+        } else {
+            topBtn.style.display = 'none';
+        }
+    });
+
+    // 4. Smooth scroll execution on click
+    topBtn.onclick = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+
+    // 5. Append button to the document body
+    document.body.appendChild(topBtn);
+})();
+
+
 </script>
 
 @endsection
